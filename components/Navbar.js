@@ -2,14 +2,26 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { FaBars, FaTimes } from "react-icons/fa";
 import ThemeSwitcher from "./ThemeSwitcher";
+import { usePathname } from "next/navigation";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
 
+  const pathname = usePathname();
+
+  const links = [
+    { href: "/", label: "Home" },
+    { href: "/about", label: "About" },
+    { href: "/my-tech-stack", label: "Tech Stack" },
+    { href: "/project", label: "Projects" },
+    { href: "/contact", label: "Contact" },
+  ];
+
   useEffect(() => {
     const handleScroll = () => {
       setIsSticky(window.scrollY > 500);
+      setMenuOpen(false);
     };
 
     window.addEventListener("scroll", handleScroll);
@@ -39,21 +51,17 @@ export default function Navbar() {
         </div>
 
         <div className="hidden md:flex gap-8 text-gray-700 dark:text-gray-300 text-lg">
-          <Link href="/" className="hover:text-blue-500">
-            Home
-          </Link>
-          <Link href="/about" className="hover:text-blue-500">
-            About
-          </Link>
-          <Link href="/my-tech-stack" className="hover:text-blue-500">
-            Tech Stack
-          </Link>
-          <Link href="/project" className="hover:text-blue-500">
-            Projects
-          </Link>
-          <Link href="/contact" className="hover:text-blue-500">
-            Contact
-          </Link>
+          {links.map(link => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`hover:text-blue-500 ${
+                pathname === link.href ? "text-blue-500" : ""
+              }`}
+            >
+              {link.label}
+            </Link>
+          ))}
         </div>
 
         <div className="flex items-center gap-4 text-gray-700 dark:text-gray-300 text-xl">

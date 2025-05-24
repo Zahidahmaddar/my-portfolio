@@ -29,7 +29,7 @@ const Projects = () => {
   return (
     <>
       <Navbar />
-      <div className="mt-20 h-full">
+      <div className="h-full">
         <section id="projects" className="py-20 px-6 bg-white dark:bg-black">
           <div className="max-w-[1200px] mx-auto text-center">
             <h2 className="text-4xl font-bold text-gray-800 dark:text-white">

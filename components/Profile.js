@@ -17,7 +17,7 @@ const Profile = () => {
         </div>
 
         {/* Right Profile Image */}
-        <div className="w-full md:w-1/2 flex justify-end">
+        <div className="w-full md:w-1/2 flex justify-center md:justify-end">
           <div className="relative w-52 h-52 rounded-full bg-gradient-to-r from-pink-500 to-blue-500 p-1">
             <div className="w-full h-full rounded-full bg-white dark:bg-gray-900 p-1">
               <Image
