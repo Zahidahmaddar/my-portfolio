@@ -8,6 +8,7 @@ function MyApp({ Component, pageProps }) {
       <Head>
         <title>Zahid Farooq | Portfolio</title>
         <meta name="description" content="Portfolio of Zahid Farooq" />
+        <link rel="icon" href="/images/my-image.png" />
       </Head>
       <ThemeProvider attribute="class">
         <Component {...pageProps} />

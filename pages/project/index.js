@@ -5,24 +5,51 @@ import { motion } from "framer-motion";
 
 const projects = [
   {
-    title: "Portfolio Website",
+    title: "Kupos.cl",
     description:
-      "This is sample project description random things are here in description This is sample project lorem ipsum generator for dummy content",
-    tech: "HTML, JavaScript, SASS, React",
-    image: "/images/project1.png",
-    liveLink: "https://yourdomain.com",
+      "Kupos.cl is a modern and responsive web application for booking bus and train tickets across multiple cities in Chile. It allows users to search routes, compare fares, view real-time availability, and make secure bookings—all from a user-friendly interface. Built with performance and scalability in mind, the platform streamlines travel planning for both commuters and long-distance travelers.",
+    tech: "HTML, JavaScript, React, Next",
+    image: "/images/icons/kupos-logo2.svg",
+    liveLink: "https://kupos.cl/",
     codeLink: "https://github.com/your-repo",
   },
   {
-    title: "Dashboard UI",
+    title: "Turbus.cl",
     description:
-      "This is sample project description random things are here in description This is sample project lorem ipsum generator for dummy content",
-    tech: "Next.js, Tailwind CSS",
-    image: "/images/project2.png",
+      "Turbus.cl is a modern and responsive web application for booking bus  tickets across multiple cities in Chile. It allows users to search routes, compare fares, view real-time availability, and make secure bookings—all from a user-friendly interface. Built with performance and scalability in mind, the platform streamlines travel planning for both commuters and long-distance travelers.",
+    tech: "HTML, JavaScript, React, Next",
+    image: "/images/icons/Turbus-website-home-green-logo.svg",
+    liveLink: "https://turbus.cl/",
+    codeLink: "https://github.com/your-repo",
+  },
+  {
+    title: "Zipmex",
+    description:
+      "A responsive cryptocurrency exchange platform where users can securely trade popular assets like Bitcoin, Ethereum, Litecoin, Ripple, and Bitcoin Cash. Developed using Next.js for SSR and Tailwind CSS for rapid UI development, Zipmex ensures fast performance, intuitive UX, and high scalability for real-time trading environments.",
+    tech: "HTML, CSS, REDUX, Next.js, Tailwind CSS",
+    image:
+      "/images/icons/zipmex-cryptocurrency-zmt-token-logo-260nw-2213372771.webp",
     liveLink: "#",
     codeLink: "#",
   },
-  // Add more...
+  {
+    title: "Kimo",
+    description:
+      "KIMO.AI is an AI-powered EdTech company focused on personalized learning at scale. It aims to reinvent online learning by providing automated summaries and personalized learning paths based on user preferences. KIMO.AI also offers features like automated summaries and filters for various content types, difficulty levels, price points, and more.",
+    tech: "HTML, CSS, Next.js, Tailwind CSS",
+    image: "/images/icons/download.jpeg",
+    liveLink: "#",
+    codeLink: "#",
+  },
+  // {
+  //   title: "B-Pharm",
+  //   description:
+  //     "This is sample project description random things are here in description This is sample project lorem ipsum generator for dummy content",
+  //   tech: "Next.js, Tailwind CSS",
+  //   image: "/images/project2.png",
+  //   liveLink: "#",
+  //   codeLink: "#",
+  // },
 ];
 
 const Projects = () => {
@@ -52,12 +79,12 @@ const Projects = () => {
                   }}
                   className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden"
                 >
-                  <div className="relative w-full h-48">
+                  <div className="relative h-20 w-[200px] m-auto">
                     <Image
                       src={proj.image}
                       alt={proj.title}
                       fill
-                      className="object-cover"
+                      className="object-contain"
                     />
                   </div>
                   <div className="p-5 text-left">

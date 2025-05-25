@@ -67,6 +67,13 @@ export default function Navbar() {
         <div className="flex items-center gap-4 text-gray-700 dark:text-gray-300 text-xl">
           <div className="hidden md:flex items-center gap-4">
             <ThemeSwitcher />
+            <a
+              href="/resume.pdf"
+              download
+              className="px-4 py-1 rounded border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition text-sm"
+            >
+              Resume
+            </a>
           </div>
           <button
             className="md:hidden text-2xl focus:outline-none"

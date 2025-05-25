@@ -18,11 +18,23 @@ const About = () => {
             <h1 className="text-3xl font-bold mb-4 text-[#2D2D2D] dark:text-white">
               About Me
             </h1>
-            <p className="text-base text-gray-600 dark:text-gray-300 w-7/12">
-              The Generator App is an online tool that helps you to export
-              ready-made templates ready to work as your future website. It
-              helps you to combine slides, panels and other components and
-              export it as a set of static files: HTML/CSS/JS.
+
+            <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed w-7/12">
+              I&apos;m Zahid Farooq — a passionate Frontend Developer with a
+              strong focus on building responsive, user-friendly, and visually
+              appealing web applications. I specialize in modern JavaScript
+              frameworks like React, along with tools such as Tailwind CSS,
+              TypeScript, and Git.
+            </p>
+            <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mt-4 w-7/12">
+              I enjoy turning ideas into reality through clean, scalable code.
+              Whether it’s crafting a smooth user interface or solving tricky UI
+              challenges, I love the balance between design and development.
+            </p>
+            <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mt-4 w-7/12">
+              When I’m not coding, you’ll find me exploring new tech,
+              contributing to open source, or leveling up my skills through side
+              projects and tutorials.
             </p>
           </section>
 
