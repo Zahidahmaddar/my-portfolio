@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Image from "next/image";
 import { FaExternalLinkAlt, FaGithub } from "react-icons/fa";
@@ -6,27 +9,27 @@ import { motion } from "framer-motion";
 const projects = [
   {
     title: "Kupos.cl",
-    description:
-      "Kupos.cl is a modern and responsive web application for booking bus and train tickets across multiple cities in Chile. It allows users to search routes, compare fares, view real-time availability, and make secure bookings—all from a user-friendly interface. Built with performance and scalability in mind, the platform streamlines travel planning for both commuters and long-distance travelers.",
-    tech: "HTML, JavaScript, React, Next",
+    description: "A modern booking platform for buses and trains in Chile.",
+    tech: ["HTML", "JavaScript", "React", "Next"],
+    type: "Web App",
     image: "/images/icons/kupos-logo2.svg",
     liveLink: "https://kupos.cl/",
     codeLink: "https://github.com/your-repo",
   },
   {
     title: "Turbus.cl",
-    description:
-      "Turbus.cl is a modern and responsive web application for booking bus  tickets across multiple cities in Chile. It allows users to search routes, compare fares, view real-time availability, and make secure bookings—all from a user-friendly interface. Built with performance and scalability in mind, the platform streamlines travel planning for both commuters and long-distance travelers.",
-    tech: "HTML, JavaScript, React, Next",
+    description: "A responsive booking app for bus travel across Chile.",
+    tech: ["HTML", "JavaScript", "React", "Next"],
+    type: "Web App",
     image: "/images/icons/Turbus-website-home-green-logo.svg",
     liveLink: "https://turbus.cl/",
     codeLink: "https://github.com/your-repo",
   },
   {
     title: "Zipmex",
-    description:
-      "A responsive cryptocurrency exchange platform where users can securely trade popular assets like Bitcoin, Ethereum, Litecoin, Ripple, and Bitcoin Cash. Developed using Next.js for SSR and Tailwind CSS for rapid UI development, Zipmex ensures fast performance, intuitive UX, and high scalability for real-time trading environments.",
-    tech: "HTML, CSS, REDUX, Next.js, Tailwind CSS",
+    description: "Cryptocurrency exchange platform built with Next.js.",
+    tech: ["HTML", "CSS", "Redux", "Next.js", "Tailwind CSS"],
+    type: "Web App",
     image:
       "/images/icons/zipmex-cryptocurrency-zmt-token-logo-260nw-2213372771.webp",
     liveLink: "#",
@@ -34,25 +37,32 @@ const projects = [
   },
   {
     title: "Kimo",
-    description:
-      "KIMO.AI is an AI-powered EdTech company focused on personalized learning at scale. It aims to reinvent online learning by providing automated summaries and personalized learning paths based on user preferences. KIMO.AI also offers features like automated summaries and filters for various content types, difficulty levels, price points, and more.",
-    tech: "HTML, CSS, Next.js, Tailwind CSS",
+    description: "AI-powered EdTech platform for personalized learning.",
+    tech: ["HTML", "CSS", "Next.js", "Tailwind CSS"],
+    type: "EdTech",
     image: "/images/icons/download.jpeg",
     liveLink: "#",
     codeLink: "#",
   },
-  // {
-  //   title: "B-Pharm",
-  //   description:
-  //     "This is sample project description random things are here in description This is sample project lorem ipsum generator for dummy content",
-  //   tech: "Next.js, Tailwind CSS",
-  //   image: "/images/project2.png",
-  //   liveLink: "#",
-  //   codeLink: "#",
-  // },
 ];
 
+const allTech = [...new Set(projects.flatMap(p => p.tech))];
+const allTypes = [...new Set(projects.map(p => p.type))];
+
 const Projects = () => {
+  const [search, setSearch] = useState("");
+  const [selectedTech, setSelectedTech] = useState("");
+  const [selectedType, setSelectedType] = useState("");
+
+  const filteredProjects = projects.filter(p => {
+    const matchesSearch =
+      p.title.toLowerCase().includes(search.toLowerCase()) ||
+      p.tech.some(t => t.toLowerCase().includes(search.toLowerCase()));
+    const matchesTech = selectedTech ? p.tech.includes(selectedTech) : true;
+    const matchesType = selectedType ? p.type === selectedType : true;
+    return matchesSearch && matchesTech && matchesType;
+  });
+
   return (
     <>
       <Navbar />
@@ -66,58 +76,100 @@ const Projects = () => {
               Things I’ve built so far
             </p>
 
-            <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {projects.map((proj, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{
-                    duration: 0.5,
-                    delay: idx * 0.1,
-                    ease: "easeOut",
-                  }}
-                  className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden"
-                >
-                  <div className="relative h-20 w-[200px] m-auto">
-                    <Image
-                      src={proj.image}
-                      alt={proj.title}
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
-                  <div className="p-5 text-left">
-                    <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                      {proj.title}
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
-                      {proj.description}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-3">
-                      <strong>Tech stack:</strong> {proj.tech}
-                    </p>
-                    <div className="mt-4 flex space-x-4">
-                      <a
-                        href={proj.liveLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm inline-flex items-center gap-1 border px-3 py-1 rounded-full text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        <FaExternalLinkAlt /> Live Preview
-                      </a>
-                      <a
-                        href={proj.codeLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm inline-flex items-center gap-1 border px-3 py-1 rounded-full text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        <FaGithub /> View Code
-                      </a>
+            {/* Filters */}
+            <div className="flex flex-wrap justify-center gap-4 mt-10 mb-10">
+              <input
+                type="text"
+                placeholder="Search by name or tech..."
+                className="border px-4 py-2 rounded w-full sm:w-60"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+              <select
+                className="border px-4 py-2 rounded"
+                value={selectedTech}
+                onChange={e => setSelectedTech(e.target.value)}
+              >
+                <option value="">All Tech</option>
+                {allTech.map(tech => (
+                  <option key={tech} value={tech}>
+                    {tech}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="border px-4 py-2 rounded"
+                value={selectedType}
+                onChange={e => setSelectedType(e.target.value)}
+              >
+                <option value="">All Types</option>
+                {allTypes.map(type => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Project Cards */}
+            <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredProjects.length > 0 ? (
+                filteredProjects.map((proj, idx) => (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{
+                      duration: 0.5,
+                      delay: idx * 0.1,
+                      ease: "easeOut",
+                    }}
+                    className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden"
+                  >
+                    <div className="relative h-20 w-[200px] m-auto">
+                      <Image
+                        src={proj.image}
+                        alt={proj.title}
+                        fill
+                        className="object-contain"
+                      />
                     </div>
-                  </div>
-                </motion.div>
-              ))}
+                    <div className="p-5 text-left">
+                      <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                        {proj.title}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
+                        {proj.description}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-3">
+                        <strong>Tech stack:</strong> {proj.tech.join(", ")}
+                      </p>
+                      <div className="mt-4 flex space-x-4">
+                        <a
+                          href={proj.liveLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm inline-flex items-center gap-1 border px-3 py-1 rounded-full text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                          <FaExternalLinkAlt /> Live Preview
+                        </a>
+                        <a
+                          href={proj.codeLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm inline-flex items-center gap-1 border px-3 py-1 rounded-full text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                          <FaGithub /> View Code
+                        </a>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400 col-span-full">
+                  No projects found.
+                </p>
+              )}
             </div>
           </div>
         </section>

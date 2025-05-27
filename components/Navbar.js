@@ -16,6 +16,7 @@ export default function Navbar() {
     { href: "/my-tech-stack", label: "Tech Stack" },
     { href: "/project", label: "Projects" },
     { href: "/contact", label: "Contact" },
+    { href: "/blog", label: "Blog" },
   ];
 
   useEffect(() => {

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { useRouter } from "next/router";
 
 const projects = [
   {
@@ -29,15 +30,15 @@ const projects = [
     liveLink: "#",
     codeLink: "#",
   },
-  {
-    title: "Kimo",
-    description:
-      "KIMO.AI is an AI-powered EdTech company focused on personalized learning at scale. It aims to reinvent online learning by providing automated summaries and personalized learning paths based on user preferences. KIMO.AI also offers features like automated summaries and filters for various content types, difficulty levels, price points, and more.",
-    tech: "Next.js, Tailwind CSS",
-    image: "/images/icons/download.jpeg",
-    liveLink: "#",
-    codeLink: "#",
-  },
+  // {
+  //   title: "Kimo",
+  //   description:
+  //     "KIMO.AI is an AI-powered EdTech company focused on personalized learning at scale. It aims to reinvent online learning by providing automated summaries and personalized learning paths based on user preferences. KIMO.AI also offers features like automated summaries and filters for various content types, difficulty levels, price points, and more.",
+  //   tech: "Next.js, Tailwind CSS",
+  //   image: "/images/icons/download.jpeg",
+  //   liveLink: "#",
+  //   codeLink: "#",
+  // },
   // {
   //   title: "B-Pharm",
   //   description:
@@ -50,15 +51,26 @@ const projects = [
 ];
 
 const Projects = () => {
+  const router = useRouter();
   return (
     <section id="projects" className="py-20 px-6 bg-white dark:bg-black">
-      <div className="max-w-[1200px] mx-auto text-center">
-        <h2 className="text-4xl font-bold text-gray-800 dark:text-white">
-          Projects
-        </h2>
-        <p className="mt-2 text-gray-600 dark:text-gray-300">
-          Things I’ve built so far
-        </p>
+      <div className="max-w-[1200px] mx-auto ">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-4xl font-bold text-gray-800 dark:text-white">
+              Projects
+            </h2>
+            <p className="mt-2 text-gray-600 dark:text-gray-300">
+              Things I’ve built so far
+            </p>
+          </div>
+          <div
+            onClick={() => router.push("/project")}
+            className="cursor-pointer inline-block px-4 py-1 border border-transparent hover:border-blue-500 text-gray-700 dark:text-gray-300 hover:text-blue-500 transition duration-200 rounded"
+          >
+            <span>See All</span>
+          </div>
+        </div>
 
         <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {projects.map((proj, idx) => (
