@@ -89,6 +89,22 @@ export default function Navbar() {
       {menuOpen && (
         <div className="md:hidden px-4 pb-4">
           <div className="flex flex-col gap-4 text-gray-700 dark:text-gray-300 text-lg">
+            {links.map(link => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`hover:text-blue-500 ${
+                  pathname === link.href ? "text-blue-500" : ""
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+            <div className="flex gap-4 pt-2 text-xl">
+              <ThemeSwitcher />
+            </div>
+          </div>
+          {/* <div className="flex flex-col gap-4 text-gray-700 dark:text-gray-300 text-lg">
             <Link
               href="/"
               className="hover:text-blue-500"
@@ -127,7 +143,7 @@ export default function Navbar() {
             <div className="flex gap-4 pt-2 text-xl">
               <ThemeSwitcher />
             </div>
-          </div>
+          </div> */}
         </div>
       )}
     </nav>

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { FaExternalLinkAlt, FaGithub } from "react-icons/fa";
 import { motion } from "framer-motion";
 
+// Project Data
 const projects = [
   {
     title: "Kupos.cl",
@@ -46,8 +47,31 @@ const projects = [
   },
 ];
 
+// Unique filter values
 const allTech = [...new Set(projects.flatMap(p => p.tech))];
 const allTypes = [...new Set(projects.map(p => p.type))];
+
+// Animation variants
+const container = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.15,
+    },
+  },
+};
+
+const card = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: "easeInOut",
+    },
+  },
+};
 
 const Projects = () => {
   const [search, setSearch] = useState("");
@@ -112,21 +136,20 @@ const Projects = () => {
             </div>
 
             {/* Project Cards */}
-            <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <motion.div
+              className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-8"
+              variants={container}
+              initial="hidden"
+              animate="visible"
+            >
               {filteredProjects.length > 0 ? (
                 filteredProjects.map((proj, idx) => (
                   <motion.div
                     key={idx}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{
-                      duration: 0.5,
-                      delay: idx * 0.1,
-                      ease: "easeOut",
-                    }}
-                    className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden"
+                    variants={card}
+                    className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden hover:animate-zoomInOut"
                   >
-                    <div className="relative h-20 w-[200px] m-auto">
+                    <div className="relative h-20 w-[200px] m-auto mt-4">
                       <Image
                         src={proj.image}
                         alt={proj.title}
@@ -144,7 +167,7 @@ const Projects = () => {
                       <p className="text-xs text-gray-500 mt-3">
                         <strong>Tech stack:</strong> {proj.tech.join(", ")}
                       </p>
-                      <div className="mt-4 flex space-x-4">
+                      <div className="mt-4 flex space-x-4 flex-wrap">
                         <a
                           href={proj.liveLink}
                           target="_blank"
@@ -153,14 +176,14 @@ const Projects = () => {
                         >
                           <FaExternalLinkAlt /> Live Preview
                         </a>
-                        <a
+                        {/* <a
                           href={proj.codeLink}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-sm inline-flex items-center gap-1 border px-3 py-1 rounded-full text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
                         >
                           <FaGithub /> View Code
-                        </a>
+                        </a> */}
                       </div>
                     </div>
                   </motion.div>
@@ -170,7 +193,7 @@ const Projects = () => {
                   No projects found.
                 </p>
               )}
-            </div>
+            </motion.div>
           </div>
         </section>
       </div>

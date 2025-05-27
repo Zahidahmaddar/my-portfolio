@@ -7,7 +7,7 @@ const About = () => {
   return (
     <>
       <Navbar />
-      <div className="mt-24">
+      <div>
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -19,26 +19,26 @@ const About = () => {
               About Me
             </h1>
 
-            <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed w-7/12">
+            <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed w-full md:w-10/12 lg:w-8/12">
               I&apos;m Zahid Farooq — a passionate Frontend Developer with a
               strong focus on building responsive, user-friendly, and visually
               appealing web applications. I specialize in modern JavaScript
               frameworks like React, along with tools such as Tailwind CSS,
               TypeScript, and Git.
             </p>
-            <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mt-4 w-7/12">
+            <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mt-4 w-full md:w-10/12 lg:w-8/12">
               I enjoy turning ideas into reality through clean, scalable code.
               Whether it’s crafting a smooth user interface or solving tricky UI
               challenges, I love the balance between design and development.
             </p>
-            <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mt-4 w-7/12">
+            <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mt-4 w-full md:w-10/12 lg:w-8/12">
               When I’m not coding, you’ll find me exploring new tech,
               contributing to open source, or leveling up my skills through side
               projects and tutorials.
             </p>
           </section>
 
-          <section className="mb-12 w-7/12">
+          <section className="mb-12 w-full md:w-10/12 lg:w-8/12">
             <h2 className="text-2xl font-bold mb-6 text-[#2D2D2D] dark:text-white">
               Work Experience
             </h2>
@@ -67,7 +67,7 @@ const About = () => {
             />
           </section>
 
-          <section className="mb-12 w-7/12">
+          <section className="mb-12 w-full md:w-10/12 lg:w-8/12">
             <h2 className="text-2xl font-bold mb-6 text-[#2D2D2D] dark:text-white">
               Education
             </h2>
