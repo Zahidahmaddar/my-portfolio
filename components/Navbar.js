@@ -81,7 +81,21 @@ export default function Navbar() {
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Toggle menu"
           >
-            {menuOpen ? <FaTimes /> : <FaBars />}
+            {menuOpen ? (
+              <div className="flex gap-4 items-center">
+                <div className="text-xl">
+                  <ThemeSwitcher />
+                </div>
+                <FaTimes />
+              </div>
+            ) : (
+              <div className="flex gap-4 items-center">
+                <div className="text-xl">
+                  <ThemeSwitcher />
+                </div>
+                <FaBars />
+              </div>
+            )}
           </button>
         </div>
       </div>
@@ -100,9 +114,6 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
-            <div className="flex gap-4 pt-2 text-xl">
-              <ThemeSwitcher />
-            </div>
           </div>
           {/* <div className="flex flex-col gap-4 text-gray-700 dark:text-gray-300 text-lg">
             <Link
