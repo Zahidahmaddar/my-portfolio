@@ -25,29 +25,10 @@ const projects = [
     description:
       "A responsive cryptocurrency exchange platform where users can securely trade popular assets like Bitcoin, Ethereum, Litecoin, Ripple, and Bitcoin Cash. Developed using Next.js for SSR and Tailwind CSS for rapid UI development, Zipmex ensures fast performance, intuitive UX, and high scalability for real-time trading environments.",
     tech: "Next.js, Tailwind CSS",
-    image:
-      "/images/icons/zipmex-cryptocurrency-zmt-token-logo-260nw-2213372771.webp",
+    image: "/images/icons/Zipmex-logo.webp",
     liveLink: "#",
     codeLink: "#",
   },
-  // {
-  //   title: "Kimo",
-  //   description:
-  //     "KIMO.AI is an AI-powered EdTech company focused on personalized learning at scale. It aims to reinvent online learning by providing automated summaries and personalized learning paths based on user preferences. KIMO.AI also offers features like automated summaries and filters for various content types, difficulty levels, price points, and more.",
-  //   tech: "Next.js, Tailwind CSS",
-  //   image: "/images/icons/download.jpeg",
-  //   liveLink: "#",
-  //   codeLink: "#",
-  // },
-  // {
-  //   title: "B-Pharm",
-  //   description:
-  //     "This is sample project description random things are here in description This is sample project lorem ipsum generator for dummy content",
-  //   tech: "Next.js, Tailwind CSS",
-  //   image: "/images/project2.png",
-  //   liveLink: "#",
-  //   codeLink: "#",
-  // },
 ];
 
 const Projects = () => {

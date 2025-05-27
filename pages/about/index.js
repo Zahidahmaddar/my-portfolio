@@ -19,19 +19,19 @@ const About = () => {
               About Me
             </h1>
 
-            <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed w-full md:w-10/12 lg:w-8/12">
+            <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed md:w-10/12 lg:w-8/12">
               I&apos;m Zahid Farooq — a passionate Frontend Developer with a
               strong focus on building responsive, user-friendly, and visually
               appealing web applications. I specialize in modern JavaScript
               frameworks like React, along with tools such as Tailwind CSS,
               TypeScript, and Git.
             </p>
-            <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mt-4 w-full md:w-10/12 lg:w-8/12">
+            <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mt-4 md:w-10/12 lg:w-8/12">
               I enjoy turning ideas into reality through clean, scalable code.
               Whether it’s crafting a smooth user interface or solving tricky UI
               challenges, I love the balance between design and development.
             </p>
-            <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mt-4 w-full md:w-10/12 lg:w-8/12">
+            <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mt-4 md:w-10/12 lg:w-8/12">
               When I’m not coding, you’ll find me exploring new tech,
               contributing to open source, or leveling up my skills through side
               projects and tutorials.
@@ -75,8 +75,8 @@ const About = () => {
               title="Bachelor in Computer Application"
               company="Amar Singh college"
               location=""
-              date="Aug 2015 - Dec 2020"
-              type="Full Time"
+              date="Aug 2020 - Dec 2023"
+              // type="Full Time"
             />
           </section>
         </motion.div>
@@ -102,15 +102,17 @@ const ExperienceCard = ({ title, company, location, date, type }) => (
       </div>
       <div className="flex items-center space-x-3">
         <span>{date}</span>
-        <span
-          className={`text-xs px-2 py-1 rounded-full ${
-            type === "Full Time"
-              ? "bg-green-100 text-green-700"
-              : "bg-green-100 text-green-700"
-          }`}
-        >
-          {type}
-        </span>
+        {type && (
+          <span
+            className={`text-xs px-2 py-1 rounded-full ${
+              type === "Full Time"
+                ? "bg-green-100 text-green-700"
+                : "bg-green-100 text-green-700"
+            }`}
+          >
+            {type}
+          </span>
+        )}
       </div>
     </div>
   </div>

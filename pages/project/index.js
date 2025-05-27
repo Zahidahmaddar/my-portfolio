@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Image from "next/image";
-import { FaExternalLinkAlt, FaGithub } from "react-icons/fa";
+import { FaExternalLinkAlt } from "react-icons/fa";
 import { motion } from "framer-motion";
 
 // Project Data
@@ -31,8 +31,7 @@ const projects = [
     description: "Cryptocurrency exchange platform built with Next.js.",
     tech: ["HTML", "CSS", "Redux", "Next.js", "Tailwind CSS"],
     type: "Web App",
-    image:
-      "/images/icons/zipmex-cryptocurrency-zmt-token-logo-260nw-2213372771.webp",
+    image: "/images/icons/Zipmex-logo.webp",
     liveLink: "#",
     codeLink: "#",
   },
@@ -41,7 +40,7 @@ const projects = [
     description: "AI-powered EdTech platform for personalized learning.",
     tech: ["HTML", "CSS", "Next.js", "Tailwind CSS"],
     type: "EdTech",
-    image: "/images/icons/download.jpeg",
+    image: "/images/icons/kimo_logo_small.png",
     liveLink: "#",
     codeLink: "#",
   },
