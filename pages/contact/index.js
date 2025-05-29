@@ -7,6 +7,7 @@ import { FaGithub, FaLinkedin } from "react-icons/fa";
 
 const Contact = () => {
   const [submitted, setSubmitted] = useState(false);
+  const [formError, setFormError] = useState("");
 
   return (
     <>
@@ -35,7 +36,35 @@ const Contact = () => {
             <form
               action="https://formspree.io/f/mzzrlble"
               method="POST"
-              onSubmit={() => setSubmitted(true)}
+              onSubmit={async e => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                try {
+                  const response = await fetch(
+                    "https://formspree.io/f/mzzrlble",
+                    {
+                      method: "POST",
+                      body: formData,
+                      headers: {
+                        Accept: "application/json",
+                      },
+                    },
+                  );
+
+                  if (response.ok) {
+                    setSubmitted(true);
+                    setFormError("");
+                  } else {
+                    const data = await response.json();
+                    setFormError(
+                      data.error || "Something went wrong. Please try again.",
+                    );
+                  }
+                } catch (error) {
+                  console.error("Form submission error:", error);
+                  setFormError("Network error. Please try again.");
+                }
+              }}
               className="w-full max-w-md space-y-4 bg-white dark:bg-gray-900 p-6 rounded shadow-md transition-all duration-300"
             >
               <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
@@ -75,6 +104,9 @@ const Contact = () => {
                 value="New Contact Message"
               />
 
+              {formError && (
+                <div className="text-red-500 text-sm">{formError}</div>
+              )}
               <button
                 type="submit"
                 className="w-full bg-black text-white dark:bg-white dark:text-black py-2 rounded hover:opacity-90 transition"
