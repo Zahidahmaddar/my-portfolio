@@ -1,0 +1,112 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --background-rgb: 255, 255, 255;
+  --foreground: #1a202c;
+  --primary: #3182ce;
+  --primary-dark: #2c5282;
+  --secondary: #2d3748; /* darker gray for better contrast */
+  --accent: #ed8936;
+  --card-background: #ffffff;
+  --card-border: transparent;
+  --card-text: #1a202c;
+  --card-text-secondary: #2d3748; /* darker gray for better readability */
+  --form-background: #ffffff;
+  --form-border: #e2e8f0; /* gray-300 */
+  --form-text: #1a202c;
+  --form-label: #2d3748; /* darker gray for better contrast */
+  --text-primary: #1a202c;
+  --text-secondary: #2d3748;
+  
+  /* Glassmorphism */
+  --glass-background: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  --glass-blur: 8px;
+  
+  /* Neumorphism */
+  --neu-background: #f0f0f0;
+  --neu-shadow-light: rgba(255, 255, 255, 0.8);
+  --neu-shadow-dark: rgba(0, 0, 0, 0.1);
+  
+  /* Hero Section */
+  --hero-bg-from: #dbeafe; /* blue-50 */
+  --hero-bg-to: #e0e7ff; /* indigo-100 */
+}
+
+.dark {
+  --background: #1a202c;
+  --background-rgb: 26, 32, 44;
+  --foreground: #f7fafc;
+  --primary: #63b3ed;
+  --primary-dark: #90cdf4;
+  --secondary: #a0aec0;
+  --accent: #fbd38d;
+  --card-background: #2d3748; /* dark gray-800 */
+  --card-border: #4a5568; /* gray-700 */
+  --card-text: #f7fafc; /* white/gray-100 */
+  --card-text-secondary: #e2e8f0; /* gray-300 */
+  --form-background: #2d3748; /* dark gray-800 */
+  --form-border: #4a5568; /* gray-700 */
+  --form-text: #f7fafc; /* white/gray-100 */
+  --form-label: #e2e8f0; /* gray-300 */
+  --text-primary: #f7fafc;
+  --text-secondary: #e2e8f0;  
+  /* Glassmorphism */
+  --glass-background: rgba(30, 41, 59, 0.7); /* slate-800 with opacity */
+  --glass-border: rgba(71, 85, 105, 0.3); /* slate-600 with opacity */
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  
+  /* Neumorphism */
+  --neu-background: #2d3748; /* dark gray-800 */
+  --neu-shadow-light: rgba(61, 72, 82, 0.7); /* lighter than background */
+  --neu-shadow-dark: rgba(0, 0, 0, 0.5);
+  
+  /* Hero Section */
+  --hero-bg-from: #111827; /* gray-900 */
+  --hero-bg-to: #1f2937; /* gray-800 */
+}
+
+/* Base styles */
+html, body {
+  background-color: var(--background);
+  color: var(--foreground);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Force all sections to inherit background or use CSS variables */
+section {
+  background-color: inherit;
+}
+
+/* Override any gradient backgrounds in dark mode */
+.dark .bg-gradient-to-br.from-blue-50.to-indigo-100 {
+  background: var(--background);
+}
+
+/* Social icon hover effects */
+.social-icon-link:hover {
+  color: #3182ce !important; /* blue-600 */
+}
+
+.dark .social-icon-link:hover {
+  color: #63b3ed !important; /* blue-400 */
+}
+
+/* Navbar hover effects */
+.navbar-brand:hover {
+  color: #3182ce !important; /* blue-600 */
+}
+
+.dark .navbar-brand:hover {
+  color: #63b3ed !important; /* blue-400 */
+}
+
+.navbar-link:hover {
+  color: #3182ce !important; /* blue-600 */
+}
+
+.dark .navbar-link:hover {
+  color: #63b3ed !important; /* blue-400 */
+}
