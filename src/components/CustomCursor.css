@@ -1,0 +1,57 @@
+/* Custom Cursor Styles */
+.custom-cursor-dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 6px;
+  background-color: #6b7280; /* Gray-500 - darker gray */
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: all 0.3s ease-out;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.custom-cursor-circle {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%, -50%);
+  transition: all 0.3s ease-out;
+  backdrop-filter: blur(4px);
+  background: rgba(128, 128, 128, 0.2);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 0 10px rgba(128, 128, 128, 0.1);
+}
+
+.custom-cursor-circle.hovering {
+  width: 24px;
+  height: 24px;
+  background: rgba(128, 128, 128, 0.3);
+  border: none;
+  backdrop-filter: blur(12px);
+  box-shadow: 
+    0 6px 16px rgba(0, 0, 0, 0.2),
+    0 0 20px rgba(128, 128, 128, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.custom-cursor-dot.hovering {
+  width: 4px;
+  height: 4px;
+  background-color: #4b5563; /* Gray-600 - even darker on hover */
+}
+
+/* Hide cursor on interactive elements */
+a, button, .cursor-pointer {
+  cursor: none;
+}
