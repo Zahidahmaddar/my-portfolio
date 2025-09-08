@@ -5,7 +5,7 @@ const bcrypt = require("bcryptjs");
 
 // MongoDB connection - hardcoded for direct use
 const MONGODB_URI =
-  "mongodb+srv://darzahid537:ddtHc22#63@cluster0.gdkciyi.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+  "mongodb+srv://zahid:ddtHc2263@cluster0.g2uwokq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
 if (!MONGODB_URI) {
   console.error("MongoDB URI is not defined");
