@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const RAW_URI = process.env.MONGODB_URI!;
-
+//for pushing
 // Auto-encode password to handle special characters
 function encodeMongoURI(uri: string): string {
   const match = uri.match(/^(mongodb(?:\+srv)?:\/\/)([^:]+):([^@]+)@(.+)$/);
