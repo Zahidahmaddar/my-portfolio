@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/common/Navbar";
@@ -35,7 +35,6 @@ export const metadata: Metadata = {
   authors: [{ name: "Zahid Farooq", url: "https://zahidfarooq.com" }],
   creator: "Zahid Farooq",
   publisher: "Zahid Farooq",
-  viewport: "width=device-width, initial-scale=1",
   robots: "index, follow",
 
   // Favicon and icons
@@ -103,6 +102,11 @@ export const metadata: Metadata = {
     "color-scheme": "light dark",
     "format-detection": "telephone=no",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({

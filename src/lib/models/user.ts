@@ -40,7 +40,7 @@ UserSchema.pre('save', async function (next) {
     const salt = await bcrypt.genSalt(12);
     this.password = await bcrypt.hash(this.password, salt);
     next();
-  } catch (error) {
+  } catch {
     // Pass null as error to indicate no error occurred
     next(null);
   }

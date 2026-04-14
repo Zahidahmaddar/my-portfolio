@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { X, Save, Plus } from 'lucide-react';
-import { Project } from '@/types/Project';
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { X, Save, Plus } from "lucide-react";
+import { Project } from "@/types/Project";
 
 interface AdminProjectFormProps {
   project?: Project;
@@ -12,16 +12,21 @@ interface AdminProjectFormProps {
   onSave: (project: Project) => void;
 }
 
-const AdminProjectForm = ({ project, isOpen, onClose, onSave }: AdminProjectFormProps) => {
+const AdminProjectForm = ({
+  project,
+  isOpen,
+  onClose,
+  onSave,
+}: AdminProjectFormProps) => {
   const [formData, setFormData] = useState<Project>({
-    title: '',
-    description: '',
+    title: "",
+    description: "",
     tech: [],
-    image: '',
-    repoUrl: '',
-    liveUrl: '',
+    image: "",
+    repoUrl: "",
+    liveUrl: "",
   });
-  const [techInput, setTechInput] = useState('');
+  const [techInput, setTechInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -29,12 +34,12 @@ const AdminProjectForm = ({ project, isOpen, onClose, onSave }: AdminProjectForm
       setFormData(project);
     } else {
       setFormData({
-        title: '',
-        description: '',
+        title: "",
+        description: "",
         tech: [],
-        image: '',
-        repoUrl: '',
-        liveUrl: '',
+        image: "",
+        repoUrl: "",
+        liveUrl: "",
       });
     }
   }, [project]);
@@ -44,18 +49,16 @@ const AdminProjectForm = ({ project, isOpen, onClose, onSave }: AdminProjectForm
     setIsLoading(true);
 
     try {
-      const method = project?._id ? 'PUT' : 'POST';
-      const body = project?._id 
-        ? { ...formData, id: project._id }
-        : formData;
+      const method = project?._id ? "PUT" : "POST";
+      const body = project?._id ? { ...formData, id: project._id } : formData;
 
-      const response = await fetch('/api/projects', {
+      const response = await fetch("/api/projects", {
         method,
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(body),
-        credentials: 'include',
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -63,10 +66,10 @@ const AdminProjectForm = ({ project, isOpen, onClose, onSave }: AdminProjectForm
         onSave(data.data);
         onClose();
       } else {
-        alert(data.error || 'Failed to save project');
+        alert(data.error || "Failed to save project");
       }
-    } catch (error) {
-      alert('Failed to save project');
+    } catch {
+      alert("Failed to save project");
     } finally {
       setIsLoading(false);
     }
@@ -78,19 +81,19 @@ const AdminProjectForm = ({ project, isOpen, onClose, onSave }: AdminProjectForm
         ...formData,
         tech: [...formData.tech, techInput.trim()],
       });
-      setTechInput('');
+      setTechInput("");
     }
   };
 
   const removeTech = (techToRemove: string) => {
     setFormData({
       ...formData,
-      tech: formData.tech.filter(tech => tech !== techToRemove),
+      tech: formData.tech.filter((tech) => tech !== techToRemove),
     });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       addTech();
     }
@@ -108,7 +111,7 @@ const AdminProjectForm = ({ project, isOpen, onClose, onSave }: AdminProjectForm
       >
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {project?._id ? 'Edit Project' : 'Add New Project'}
+            {project?._id ? "Edit Project" : "Add New Project"}
           </h2>
           <button
             onClick={onClose}
@@ -127,7 +130,9 @@ const AdminProjectForm = ({ project, isOpen, onClose, onSave }: AdminProjectForm
               type="text"
               required
               value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, title: e.target.value })
+              }
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               placeholder="Enter project title"
             />
@@ -141,7 +146,9 @@ const AdminProjectForm = ({ project, isOpen, onClose, onSave }: AdminProjectForm
               required
               rows={4}
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               placeholder="Describe your project"
             />
@@ -155,7 +162,9 @@ const AdminProjectForm = ({ project, isOpen, onClose, onSave }: AdminProjectForm
               type="url"
               required
               value={formData.image}
-              onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, image: e.target.value })
+              }
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               placeholder="https://example.com/image.jpg"
             />
@@ -209,7 +218,9 @@ const AdminProjectForm = ({ project, isOpen, onClose, onSave }: AdminProjectForm
               <input
                 type="url"
                 value={formData.repoUrl}
-                onChange={(e) => setFormData({ ...formData, repoUrl: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, repoUrl: e.target.value })
+                }
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 placeholder="https://github.com/username/repo"
               />
@@ -222,7 +233,9 @@ const AdminProjectForm = ({ project, isOpen, onClose, onSave }: AdminProjectForm
               <input
                 type="url"
                 value={formData.liveUrl}
-                onChange={(e) => setFormData({ ...formData, liveUrl: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, liveUrl: e.target.value })
+                }
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 placeholder="https://your-project.com"
               />
@@ -243,7 +256,7 @@ const AdminProjectForm = ({ project, isOpen, onClose, onSave }: AdminProjectForm
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors flex items-center space-x-2"
             >
               <Save size={16} />
-              <span>{isLoading ? 'Saving...' : 'Save Project'}</span>
+              <span>{isLoading ? "Saving..." : "Save Project"}</span>
             </button>
           </div>
         </form>

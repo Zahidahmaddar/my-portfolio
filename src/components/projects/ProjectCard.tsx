@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import Image from 'next/image';
-import { ExternalLink, Github } from 'lucide-react';
+import { motion } from "framer-motion";
+import Image from "next/image";
+import { ExternalLink, Github } from "lucide-react";
 
 interface ProjectCardProps {
   project: {
@@ -35,9 +35,10 @@ const ProjectCard = ({ project, index }: ProjectCardProps) => {
           alt={project.title}
           fill
           className="object-cover group-hover:scale-110 transition-transform duration-300"
+          unoptimized
         />
         <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors duration-300" />
-        
+
         {/* Overlay Links */}
         <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           {project.repoUrl && (
@@ -70,7 +71,7 @@ const ProjectCard = ({ project, index }: ProjectCardProps) => {
         <h3 className="text-xl font-bold text-[var(--card-text)] mb-2 group-hover:text-blue-600 transition-colors">
           {project.title}
         </h3>
-        
+
         <p className="text-[var(--card-text-secondary)] mb-4 line-clamp-3">
           {project.description}
         </p>

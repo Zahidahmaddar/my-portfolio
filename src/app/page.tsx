@@ -8,8 +8,6 @@ import {
   Send,
   Code,
   Palette,
-  Database,
-  Globe,
   Smartphone,
 } from "lucide-react";
 import ProjectCard from "@/components/projects/ProjectCard";

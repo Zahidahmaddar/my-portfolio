@@ -26,7 +26,7 @@ export default function AdminLogin() {
         if (response.ok) {
           router.push("/admin/dashboard");
         }
-      } catch (error) {
+      } catch {
         // Not logged in, stay on login page
       }
     };
@@ -57,7 +57,7 @@ export default function AdminLogin() {
       } else {
         setError(data.error || "Login failed");
       }
-    } catch (error) {
+    } catch {
       setError("Network error. Please try again.");
     } finally {
       setIsLoading(false);
