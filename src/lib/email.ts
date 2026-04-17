@@ -8,19 +8,16 @@ interface EmailOptions {
   replyTo?: string;
 }
 
-// Create a transporter object
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // Use TLS
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-  tls: {
-    rejectUnauthorized: false // Accept self-signed certificates
-  }
-});
+// Create transporter lazily so env vars are available
+function getTransporter() {
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD?.replace(/\s/g, ''),
+    },
+  });
+}
 
 /**
  * Send an email notification
@@ -28,17 +25,13 @@ const transporter = nodemailer.createTransport({
  * @returns Promise that resolves when email is sent
  */
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
-
-    console.log(process.env.EMAIL_USER);
-    console.log(process.env.EMAIL_PASSWORD);
-    console.log(process.env.NOTIFICATION_EMAIL);
-    
   try {
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-      console.error('Email credentials not configured');
+      console.error('Email credentials not configured. Set EMAIL_USER and EMAIL_PASSWORD env vars.');
       return false;
     }
 
+    const transporter = getTransporter();
     await transporter.sendMail({
       from: `"Portfolio Contact" <${process.env.EMAIL_USER}>`,
       ...options,
@@ -101,7 +94,7 @@ export async function sendAutoReply(
     subject,
     text,
     html,
-    replyTo: process.env.EMAIL_USER || 'muzamiladnan79@gmail.com'
+    replyTo: process.env.EMAIL_USER || 'darzahid537@gmail.com'
   });
 }
 
@@ -143,7 +136,7 @@ export async function sendContactNotification(
   `;
   
   return sendEmail({
-    to: process.env.NOTIFICATION_EMAIL || process.env.EMAIL_USER || 'muzamiladnan79@gmail.com',
+    to: process.env.NOTIFICATION_EMAIL || process.env.EMAIL_USER || 'darzahid537@gmail.com',
     subject,
     text,
     html,

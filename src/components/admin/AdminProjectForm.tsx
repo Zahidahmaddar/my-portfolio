@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { X, Save, Plus } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { X, Save, Sparkles, Upload } from "lucide-react";
 import { Project } from "@/types/Project";
 
 interface AdminProjectFormProps {
@@ -28,10 +27,12 @@ const AdminProjectForm = ({
   });
   const [techInput, setTechInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const imageFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (project) {
       setFormData(project);
+      setTechInput(project.tech.join(", "));
     } else {
       setFormData({
         title: "",
@@ -41,6 +42,7 @@ const AdminProjectForm = ({
         repoUrl: "",
         liveUrl: "",
       });
+      setTechInput("");
     }
   }, [project]);
 
@@ -48,15 +50,22 @@ const AdminProjectForm = ({
     e.preventDefault();
     setIsLoading(true);
 
+    // Parse tech from comma-separated input
+    const parsedTech = techInput
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+    const submitData = { ...formData, tech: parsedTech };
+
     try {
       const method = project?._id ? "PUT" : "POST";
-      const body = project?._id ? { ...formData, id: project._id } : formData;
+      const body = project?._id
+        ? { ...submitData, id: project._id }
+        : submitData;
 
       const response = await fetch("/api/projects", {
         method,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
         credentials: "include",
       });
@@ -75,57 +84,51 @@ const AdminProjectForm = ({
     }
   };
 
-  const addTech = () => {
-    if (techInput.trim() && !formData.tech.includes(techInput.trim())) {
-      setFormData({
-        ...formData,
-        tech: [...formData.tech, techInput.trim()],
+  const handleImageUpload = async (file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        credentials: "include",
+        body: fd,
       });
-      setTechInput("");
-    }
-  };
-
-  const removeTech = (techToRemove: string) => {
-    setFormData({
-      ...formData,
-      tech: formData.tech.filter((tech) => tech !== techToRemove),
-    });
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      addTech();
+      const data = await res.json();
+      if (data.success) setFormData({ ...formData, image: data.data.url });
+      else alert("Upload failed");
+    } catch {
+      alert("Upload failed");
     }
   };
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-      >
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {project?._id ? "Edit Project" : "Add New Project"}
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-          >
-            <X size={24} />
-          </button>
-        </div>
+  const inputCls =
+    "w-full px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-lg text-sm text-zinc-200 placeholder-zinc-700 focus:outline-none focus:border-indigo-500/40 focus:ring-1 focus:ring-indigo-500/20 transition-all";
+  const labelCls =
+    "block text-[10px] font-normal text-zinc-500 uppercase tracking-wider mb-2";
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+  return (
+    <div className="rounded-xl bg-white/[0.02] border border-white/[0.06] mb-6">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
+        <div className="flex items-center gap-2">
+          <Sparkles size={16} className="text-indigo-400" />
+          <h3 className="text-sm font-semibold text-zinc-200">
+            {project?._id ? "Edit Project" : "New Project"}
+          </h3>
+        </div>
+        <button
+          onClick={onClose}
+          className="p-1.5 hover:bg-white/[0.04] rounded-lg text-zinc-500 hover:text-zinc-300 transition-colors"
+        >
+          <X size={16} />
+        </button>
+      </div>
+
+      <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Project Title *
-            </label>
+            <label className={labelCls}>Title</label>
             <input
               type="text"
               required
@@ -133,134 +136,100 @@ const AdminProjectForm = ({
               onChange={(e) =>
                 setFormData({ ...formData, title: e.target.value })
               }
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              placeholder="Enter project title"
+              className={inputCls}
+              placeholder="Project name"
             />
           </div>
-
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Description *
-            </label>
-            <textarea
-              required
-              rows={4}
-              value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              placeholder="Describe your project"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Image URL *
-            </label>
+            <label className={labelCls}>URL</label>
             <input
               type="url"
-              required
-              value={formData.image}
+              value={formData.liveUrl}
               onChange={(e) =>
-                setFormData({ ...formData, image: e.target.value })
+                setFormData({ ...formData, liveUrl: e.target.value })
               }
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              placeholder="https://example.com/image.jpg"
+              className={inputCls}
+              placeholder="https://your-project.com"
             />
           </div>
+        </div>
 
+        <div>
+          <label className={labelCls}>Description</label>
+          <textarea
+            required
+            rows={3}
+            value={formData.description}
+            onChange={(e) =>
+              setFormData({ ...formData, description: e.target.value })
+            }
+            className={`${inputCls} resize-none`}
+            placeholder="Describe your project"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Technologies *
-            </label>
-            <div className="flex space-x-2 mb-3">
+            <label className={labelCls}>Image</label>
+            <div className="flex gap-2">
               <input
                 type="text"
-                value={techInput}
-                onChange={(e) => setTechInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="Add technology (e.g., React, Node.js)"
+                value={formData.image}
+                onChange={(e) =>
+                  setFormData({ ...formData, image: e.target.value })
+                }
+                className={inputCls}
+                placeholder="URL or upload"
+              />
+              <input
+                ref={imageFileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleImageUpload(f);
+                }}
               />
               <button
                 type="button"
-                onClick={addTech}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+                onClick={() => imageFileRef.current?.click()}
+                className="px-3 py-2 bg-indigo-500/80 text-white rounded-lg hover:bg-indigo-600 transition-colors text-xs flex items-center gap-1.5 shrink-0"
               >
-                <Plus size={16} />
+                <Upload size={12} /> Upload
               </button>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {formData.tech.map((tech, index) => (
-                <span
-                  key={index}
-                  className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
-                >
-                  {tech}
-                  <button
-                    type="button"
-                    onClick={() => removeTech(tech)}
-                    className="ml-2 hover:text-red-600"
-                  >
-                    <X size={14} />
-                  </button>
-                </span>
-              ))}
-            </div>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Repository URL
-              </label>
-              <input
-                type="url"
-                value={formData.repoUrl}
-                onChange={(e) =>
-                  setFormData({ ...formData, repoUrl: e.target.value })
-                }
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="https://github.com/username/repo"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Live Demo URL
-              </label>
-              <input
-                type="url"
-                value={formData.liveUrl}
-                onChange={(e) =>
-                  setFormData({ ...formData, liveUrl: e.target.value })
-                }
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="https://your-project.com"
-              />
-            </div>
+          <div>
+            <label className={labelCls}>Tech (comma separated)</label>
+            <input
+              type="text"
+              value={techInput}
+              onChange={(e) => setTechInput(e.target.value)}
+              className={inputCls}
+              placeholder="React, Node.js, MongoDB"
+            />
           </div>
+        </div>
 
-          <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors flex items-center space-x-2"
-            >
-              <Save size={16} />
-              <span>{isLoading ? "Saving..." : "Save Project"}</span>
-            </button>
-          </div>
-        </form>
-      </motion.div>
+        <div className="flex justify-end space-x-3 pt-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-5 py-2.5 text-zinc-400 hover:text-zinc-200 transition-colors text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="px-5 py-2.5 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 disabled:opacity-50 transition-colors flex items-center space-x-2 text-sm"
+          >
+            <Save size={14} />
+            <span>{isLoading ? "Saving..." : "Save Project"}</span>
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

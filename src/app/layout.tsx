@@ -1,18 +1,16 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/common/Navbar";
 import Footer from "@/components/common/Footer";
+import ScrollProgress from "@/components/scroll-progress";
+import AnimatedBackground from "@/components/animated-background";
 import ClientWrapper from "@/components/ClientWrapper";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
@@ -117,13 +115,13 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
+        className={`${inter.variable} font-sans antialiased min-h-screen flex flex-col bg-[#050505] text-zinc-200`}
       >
+        <ScrollProgress />
+        <AnimatedBackground />
         <ClientWrapper>
           <Navbar />
-          <main className="flex-grow bg-[var(--background)] transition-colors duration-300">
-            {children}
-          </main>
+          <main className="flex-grow relative z-0">{children}</main>
           <Footer />
         </ClientWrapper>
       </body>

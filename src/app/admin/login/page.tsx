@@ -65,34 +65,32 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#050505] px-4">
       <motion.div
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        className="max-w-md w-full space-y-8"
+        className="max-w-sm w-full space-y-8"
       >
         <div className="text-center">
-          <div className="mx-auto h-16 w-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-4">
-            <Lock className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+          <div className="mx-auto h-14 w-14 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-center justify-center mb-4">
+            <Lock className="h-7 w-7 text-indigo-400" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Admin Login
-          </h2>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
+          <h2 className="text-2xl font-bold text-zinc-200">Admin Login</h2>
+          <p className="mt-2 text-sm text-zinc-500">
             Access the admin dashboard
           </p>
         </div>
 
         <motion.form
           onSubmit={handleSubmit}
-          className="mt-8 space-y-6 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg"
+          className="mt-8 space-y-5 bg-white/[0.02] border border-white/[0.06] p-8 rounded-xl"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.8 }}
         >
           {error && (
-            <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded">
+            <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg text-sm">
               {error}
             </div>
           )}
@@ -101,13 +99,13 @@ export default function AdminLogin() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                className="block text-[10px] font-normal text-zinc-500 uppercase tracking-wider mb-2"
               >
                 Email Address
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
+                  <Mail className="h-4 w-4 text-zinc-600" />
                 </div>
                 <input
                   id="email"
@@ -118,7 +116,7 @@ export default function AdminLogin() {
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
                   }
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full pl-10 pr-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-lg text-sm text-zinc-200 placeholder-zinc-700 focus:outline-none focus:border-indigo-500/40 focus:ring-1 focus:ring-indigo-500/20 transition-all"
                   placeholder="admin@example.com"
                 />
               </div>
@@ -127,13 +125,13 @@ export default function AdminLogin() {
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                className="block text-[10px] font-normal text-zinc-500 uppercase tracking-wider mb-2"
               >
                 Password
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
+                  <Lock className="h-4 w-4 text-zinc-600" />
                 </div>
                 <input
                   id="password"
@@ -144,7 +142,7 @@ export default function AdminLogin() {
                   onChange={(e) =>
                     setFormData({ ...formData, password: e.target.value })
                   }
-                  className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full pl-10 pr-12 py-3 bg-white/[0.03] border border-white/[0.06] rounded-lg text-sm text-zinc-200 placeholder-zinc-700 focus:outline-none focus:border-indigo-500/40 focus:ring-1 focus:ring-indigo-500/20 transition-all"
                   placeholder="Your password"
                 />
                 <button
@@ -153,9 +151,9 @@ export default function AdminLogin() {
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                 >
                   {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <EyeOff className="h-4 w-4 text-zinc-600 hover:text-zinc-400 transition-colors" />
                   ) : (
-                    <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <Eye className="h-4 w-4 text-zinc-600 hover:text-zinc-400 transition-colors" />
                   )}
                 </button>
               </div>
@@ -165,7 +163,7 @@ export default function AdminLogin() {
           <motion.button
             type="submit"
             disabled={isLoading}
-            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors"
+            className="w-full flex justify-center py-3 px-4 rounded-lg text-sm font-medium text-white bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
@@ -182,7 +180,7 @@ export default function AdminLogin() {
           <div className="text-center">
             <Link
               href="/"
-              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 transition-colors"
+              className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
             >
               ← Back to Portfolio
             </Link>

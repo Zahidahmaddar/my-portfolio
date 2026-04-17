@@ -68,7 +68,6 @@ export async function POST(request: NextRequest) {
 // GET - Get all submissions (admin only)
 export async function GET(request: NextRequest) {
   try {
-    // Check authentication
     const authHeader = request.headers.get('authorization');
     const token = request.cookies.get('auth-token')?.value;
     
@@ -89,5 +88,61 @@ export async function GET(request: NextRequest) {
       { success: false, error: 'Failed to fetch submissions' },
       { status: 500 }
     );
+  }
+}
+
+// PUT - Reply to a submission (admin only)
+export async function PUT(request: NextRequest) {
+  try {
+    const token = request.cookies.get('auth-token')?.value;
+    if (!token) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    await connectDB();
+    const { id, reply } = await request.json();
+
+    if (!id || !reply) {
+      return NextResponse.json({ success: false, error: 'ID and reply are required' }, { status: 400 });
+    }
+
+    const submission = await Submission.findByIdAndUpdate(
+      id,
+      { reply: reply.trim(), replied: true },
+      { new: true }
+    );
+
+    if (!submission) {
+      return NextResponse.json({ success: false, error: 'Submission not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, data: submission });
+  } catch (error) {
+    console.error('Error replying to submission:', error);
+    return NextResponse.json({ success: false, error: 'Failed to reply' }, { status: 500 });
+  }
+}
+
+// DELETE - Delete a submission (admin only)
+export async function DELETE(request: NextRequest) {
+  try {
+    const token = request.cookies.get('auth-token')?.value;
+    if (!token) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    await connectDB();
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ success: false, error: 'ID is required' }, { status: 400 });
+    }
+
+    await Submission.findByIdAndDelete(id);
+    return NextResponse.json({ success: true, message: 'Deleted' });
+  } catch (error) {
+    console.error('Error deleting submission:', error);
+    return NextResponse.json({ success: false, error: 'Failed to delete' }, { status: 500 });
   }
 }

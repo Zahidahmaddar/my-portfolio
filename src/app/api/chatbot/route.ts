@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import connectDB from '@/lib/db';
+import ChatbotKnowledge from '@/lib/models/chatbotKnowledge';
+import SiteSettings from '@/lib/models/siteSettings';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const client = new OpenAI({
+  apiKey: process.env.NVIDIA_API_KEY,
+  baseURL: 'https://integrate.api.nvidia.com/v1',
 });
 
-// Information about Zahid Farooq for the chatbot
-const MUZAMIL_INFO = `
+// Default fallback information
+const DEFAULT_INFO = `
 You are an AI assistant representing Zahid Farooq, a Software Engineer. Here's information about him:
 
 PERSONAL INFO:
@@ -40,8 +44,24 @@ PERSONALITY & APPROACH:
 - Always learning and adapting to new technologies
 - Professional yet approachable
 
-Please answer questions about Muzamil in a friendly, professional manner. If asked about specific technical details not mentioned here, you can provide general information about the technologies he uses. Always encourage visitors to check out his projects or contact him directly for more detailed discussions.
+Please answer questions about Zahid in a friendly, professional manner. If asked about specific technical details not mentioned here, you can provide general information about the technologies he uses. Always encourage visitors to check out his projects or contact him directly for more detailed discussions.
 `;
+
+async function getSystemPrompt(): Promise<string> {
+  try {
+    await connectDB();
+    const entries = await ChatbotKnowledge.find();
+    if (entries.length === 0) return DEFAULT_INFO;
+
+    const knowledgeText = entries
+      .map((e: { title: string; content: string }) => `${e.title}:\n${e.content}`)
+      .join('\n\n');
+
+    return `You are an AI assistant representing Zahid Farooq. Use the following knowledge to answer questions about him in a friendly, professional manner.\n\n${knowledgeText}\n\nIf asked about something not covered above, provide general helpful information and encourage visitors to use the contact form for detailed discussions.`;
+  } catch {
+    return DEFAULT_INFO;
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -54,20 +74,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.NVIDIA_API_KEY) {
       return NextResponse.json(
-        { success: false, error: 'OpenAI API key not configured' },
+        { success: false, error: 'NVIDIA API key not configured' },
         { status: 500 }
       );
     }
 
-    // Prepare conversation messages for OpenAI
+    const systemPrompt = await getSystemPrompt();
+
+    // Get model from DB settings
+    let modelName = 'meta/llama-3.1-8b-instruct';
+    try {
+      const settings = await SiteSettings.findOne();
+      if (settings?.aiModel) modelName = settings.aiModel;
+    } catch {
+      // use default
+    }
+
     const messages = [
       {
         role: 'system' as const,
-        content: MUZAMIL_INFO
+        content: systemPrompt
       },
-      // Add conversation history for context
       ...conversationHistory.map((msg: { role: string; content: string }) => ({
         role: msg.role === 'user' ? 'user' as const : 'assistant' as const,
         content: msg.content
@@ -78,19 +107,19 @@ export async function POST(request: NextRequest) {
       }
     ];
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+    const completion = await client.chat.completions.create({
+      model: modelName,
       messages: messages,
-      max_tokens: 300,
+      max_tokens: 512,
       temperature: 0.7,
-      presence_penalty: 0.1,
-      frequency_penalty: 0.1,
+      top_p: 0.9,
+      stream: false,
     });
 
     const aiResponse = completion.choices[0]?.message?.content;
 
     if (!aiResponse) {
-      throw new Error('No response from OpenAI');
+      throw new Error('No response from AI');
     }
 
     return NextResponse.json({
