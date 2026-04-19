@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/utils/auth';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
+import { v2 as cloudinary } from 'cloudinary';
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 // POST - Upload a file (admin only)
 export async function POST(request: NextRequest) {
@@ -9,6 +14,10 @@ export async function POST(request: NextRequest) {
     const user = isAuthenticated(request);
     if (!user) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      return NextResponse.json({ success: false, error: 'Cloudinary not configured' }, { status: 500 });
     }
 
     const formData = await request.formData();
@@ -21,20 +30,21 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-    await mkdir(uploadsDir, { recursive: true });
-
-    // Generate unique filename
-    const ext = path.extname(file.name);
-    const filename = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}${ext}`;
-    const filepath = path.join(uploadsDir, filename);
-
-    await writeFile(filepath, buffer);
+    // Upload to Cloudinary
+    const result = await new Promise<{ secure_url: string; public_id: string }>((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { folder: 'portfolio', resource_type: 'auto' },
+        (error, result) => {
+          if (error || !result) reject(error || new Error('Upload failed'));
+          else resolve(result);
+        }
+      );
+      stream.end(buffer);
+    });
 
     return NextResponse.json({
       success: true,
-      data: { url: `/uploads/${filename}`, filename },
+      data: { url: result.secure_url, filename: result.public_id },
     });
   } catch (error) {
     console.error('Error uploading file:', error);
