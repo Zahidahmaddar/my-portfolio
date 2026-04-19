@@ -362,7 +362,7 @@ export default function Home() {
               className="lg:col-span-2 flex justify-center"
             >
               <div className="relative flex items-center justify-center">
-                <div className="relative w-64 h-64 md:w-72 md:h-72 rounded-2xl overflow-hidden border border-white/[0.06]">
+                <div className="relative w-64 h-64 md:w-90 md:h-118 rounded-2xl overflow-hidden border border-white/[0.06]">
                   <Image
                     src={aboutImage}
                     alt="Zahid Farooq"

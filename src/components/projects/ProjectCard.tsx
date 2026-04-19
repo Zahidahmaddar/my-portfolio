@@ -36,7 +36,7 @@ const ProjectCard = ({ project, index, side }: ProjectCardProps) => {
           src={project.image}
           alt={project.title}
           fill
-          className="object-cover group-hover:scale-110 transition-transform duration-500"
+          className="object-cover group-hover:scale-110 transition-transform duration-500 "
           unoptimized
         />
         <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#050505]/80" />
