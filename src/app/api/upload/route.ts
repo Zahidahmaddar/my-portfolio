@@ -8,6 +8,17 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const ALLOWED_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'image/avif',
+  'image/svg+xml',
+  'application/pdf',
+];
+
 // POST - Upload a file (admin only)
 export async function POST(request: NextRequest) {
   try {
@@ -16,24 +27,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
-      return NextResponse.json({ success: false, error: 'Cloudinary not configured' }, { status: 500 });
+    const formData = await request.formData();
+    const file = formData.get('file');
+
+    if (!(file instanceof File)) {
+      return NextResponse.json({ success: false, error: 'No file provided' }, { status: 400 });
     }
 
-    const formData = await request.formData();
-    const file = formData.get('file') as File;
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return NextResponse.json({ success: false, error: 'Upload an image or a PDF' }, { status: 400 });
+    }
 
-    if (!file) {
-      return NextResponse.json({ success: false, error: 'No file provided' }, { status: 400 });
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ success: false, error: 'Files must be 10 MB or smaller' }, { status: 400 });
+    }
+
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      return NextResponse.json({ success: false, error: 'Cloudinary not configured' }, { status: 500 });
     }
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
+    // Cloudinary blocks PDF delivery from the image pipeline on many accounts,
+    // so PDFs go up as raw files, which are always served as-is
+    const isPdf = file.type === 'application/pdf';
+
     // Upload to Cloudinary
     const result = await new Promise<{ secure_url: string; public_id: string }>((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
-        { folder: 'portfolio', resource_type: 'auto' },
+        {
+          folder: 'portfolio',
+          resource_type: isPdf ? 'raw' : 'image',
+          ...(isPdf ? { use_filename: true, unique_filename: true, filename_override: file.name } : {}),
+        },
         (error, result) => {
           if (error || !result) reject(error || new Error('Upload failed'));
           else resolve(result);

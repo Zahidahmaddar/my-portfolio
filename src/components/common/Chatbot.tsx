@@ -1,301 +1,324 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { usePathname } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { Send, X, Sparkles, ArrowUp, RotateCcw } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { ArrowUp, MessageCircle, RotateCcw, X } from "lucide-react";
+import ChatMarkdown from "./ChatMarkdown";
 
 interface Message {
   id: string;
   content: string;
   role: "user" | "assistant";
-  timestamp: Date;
+  failed?: boolean;
 }
 
+const STORAGE_KEY = "chat-messages";
+const MAX_LENGTH = 1000;
+const FAILED_REPLY = "That question didn't go through. Try again, or use the contact form.";
+
 const SUGGESTIONS = [
-  "What are Zahid's skills?",
-  "Tell me about his projects",
+  "What has Zahid built?",
+  "What does he work with?",
   "How can I contact him?",
 ];
 
+const newId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
 const Chatbot: React.FC = () => {
-  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [inputMessage, setInputMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const isAdmin = pathname.startsWith("/admin");
+  const [input, setInput] = useState("");
+  const [status, setStatus] = useState<"idle" | "waiting" | "streaming">("idle");
+  const logRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const launcherRef = useRef<HTMLButtonElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const wasOpen = useRef(false);
+  const reduceMotion = useReducedMotion();
+  const isBusy = status !== "idle";
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  // Keep the conversation when the visitor reloads during this visit
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(STORAGE_KEY);
+      if (saved) setMessages(JSON.parse(saved));
+    } catch {
+      // Start with an empty conversation
+    }
+    return () => abortRef.current?.abort();
+  }, []);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (isBusy) return;
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    } catch {
+      // The conversation just won't survive a reload
+    }
+  }, [messages, isBusy]);
 
   useEffect(() => {
-    if (isOpen) inputRef.current?.focus();
+    logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
+  }, [messages, status, isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      inputRef.current?.focus();
+    } else if (wasOpen.current) {
+      launcherRef.current?.focus();
+    }
+    wasOpen.current = isOpen;
   }, [isOpen]);
 
-  if (isAdmin) return null;
+  const ask = async (question: string, history: Message[]) => {
+    if (!question || isBusy) return;
 
-  const handleSendMessage = async (text?: string) => {
-    const msg = text || inputMessage.trim();
-    if (!msg || isLoading) return;
+    const assistantId = newId();
+    setMessages([...history, { id: newId(), content: question, role: "user" }]);
+    setStatus("waiting");
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: msg,
-      role: "user",
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setInputMessage("");
-    setIsLoading(true);
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     try {
       const response = await fetch("/api/chatbot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
-          message: msg,
-          conversationHistory: messages.slice(-5),
+          message: question,
+          conversationHistory: history
+            .filter((m) => !m.failed)
+            .slice(-8)
+            .map(({ role, content }) => ({ role, content })),
         }),
       });
 
-      const data = await response.json();
-
-      if (data.success) {
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          content: data.message,
-          role: "assistant",
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
-      } else {
-        throw new Error(data.error || "Failed to get response");
+      if (!response.ok || !response.body) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || FAILED_REPLY);
       }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let reply = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        reply += decoder.decode(value, { stream: true });
+        const content = reply;
+        setStatus("streaming");
+        setMessages((current) => {
+          const others = current.filter((m) => m.id !== assistantId);
+          return [...others, { id: assistantId, content, role: "assistant" }];
+        });
+      }
+
+      if (!reply.trim()) throw new Error(FAILED_REPLY);
     } catch (error) {
-      console.error("Chatbot error:", error);
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: "Sorry, I couldn't process that. Please try again.",
-        role: "assistant",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+      if (controller.signal.aborted) return;
+      const content = error instanceof Error && error.name !== "TypeError" ? error.message : FAILED_REPLY;
+      setMessages((current) => {
+        const others = current.filter((m) => m.id !== assistantId);
+        return [...others, { id: assistantId, content, role: "assistant", failed: true }];
+      });
     } finally {
-      setIsLoading(false);
+      if (abortRef.current === controller) {
+        abortRef.current = null;
+        setStatus("idle");
+      }
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const send = (text?: string) => {
+    const question = (text ?? input).trim();
+    if (!question || isBusy) return;
+    setInput("");
+    ask(question, messages);
+    inputRef.current?.focus();
+  };
+
+  // Ask the failed question again, dropping its error reply from the conversation
+  const retry = () => {
+    const failedIndex = messages.findLastIndex((m) => m.failed);
+    const question = messages[failedIndex - 1];
+    if (failedIndex < 1 || question?.role !== "user") return;
+    ask(question.content, messages.slice(0, failedIndex - 1));
+  };
+
+  const reset = () => {
+    abortRef.current?.abort();
+    setMessages([]);
+    setInput("");
+    setStatus("idle");
+    inputRef.current?.focus();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      send();
     }
   };
 
-  const handleReset = () => {
-    setMessages([]);
-    setInputMessage("");
-  };
-
-  const formatTime = (date: Date) =>
-    date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const lastMessage = messages[messages.length - 1];
 
   return (
     <>
-      {/* Toggle Button — floating orb */}
-      <AnimatePresence>
-        {!isOpen && (
-          <motion.button
-            onClick={() => setIsOpen(true)}
-            className="fixed bottom-6 right-6 z-50 group"
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0 }}
-            transition={{
-              delay: 1.5,
-              type: "spring",
-              stiffness: 260,
-              damping: 20,
-            }}
-          >
-            <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25 group-hover:shadow-emerald-500/40 transition-shadow duration-300">
-              <Sparkles size={22} className="text-white" />
-              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-300 rounded-full border-2 border-[#050505] animate-pulse" />
-            </div>
-          </motion.button>
-        )}
-      </AnimatePresence>
+      {!isOpen && (
+        <button
+          ref={launcherRef}
+          type="button"
+          onClick={() => setIsOpen(true)}
+          className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-40 btn !rounded-full bg-ink text-surface hover:opacity-90 shadow-[var(--shadow-pop)]"
+        >
+          <MessageCircle size={16} />
+          Ask about Zahid
+        </button>
+      )}
 
-      {/* Chat Window */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 30, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 30, scale: 0.95 }}
-            transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
-            className="fixed bottom-6 right-6 z-50 w-[380px] h-[540px] flex flex-col rounded-2xl overflow-hidden border border-white/[0.08] shadow-2xl shadow-black/50"
-            style={{
-              background: "rgba(10, 10, 15, 0.92)",
-              backdropFilter: "blur(24px)",
+            role="dialog"
+            aria-label="Ask about Zahid"
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setIsOpen(false);
             }}
+            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 16 }}
+            transition={{ duration: 0.2, ease: [0.2, 0.8, 0.2, 1] }}
+            className="fixed z-50 inset-0 sm:inset-auto sm:bottom-6 sm:right-6 sm:w-[23rem] sm:h-[min(34rem,calc(100dvh-3rem))] flex flex-col bg-raised text-ink sm:rounded-2xl sm:border sm:border-line shadow-[var(--shadow-pop)] overflow-hidden"
           >
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
-                  <Sparkles size={16} className="text-white" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-zinc-100 leading-tight">
-                    Zahid&apos;s AI
-                  </h3>
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
-                    <span className="text-[10px] text-zinc-500">
-                      Online now
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
+            <div className="flex items-center justify-between pl-4 pr-2 py-2 border-b border-line">
+              <h2 className="font-semibold">Ask about Zahid</h2>
+              <div className="flex items-center">
                 {messages.length > 0 && (
                   <button
-                    onClick={handleReset}
-                    className="p-2 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.04] transition-colors"
-                    title="Reset chat"
+                    type="button"
+                    onClick={reset}
+                    aria-label="Start a new conversation"
+                    title="Start a new conversation"
+                    className="icon-btn"
                   >
-                    <RotateCcw size={14} />
+                    <RotateCcw size={16} />
                   </button>
                 )}
                 <button
+                  type="button"
                   onClick={() => setIsOpen(false)}
-                  className="p-2 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.04] transition-colors"
+                  aria-label="Close chat"
+                  className="icon-btn"
                 >
                   <X size={16} />
                 </button>
               </div>
             </div>
 
-            {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 scrollbar-thin scrollbar-thumb-white/10">
-              {/* Empty State */}
+            <div
+              ref={logRef}
+              role="log"
+              aria-live="polite"
+              aria-busy={isBusy}
+              className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 space-y-3"
+            >
               {messages.length === 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.15 }}
-                  className="flex flex-col items-center justify-center h-full text-center px-4"
-                >
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400/20 to-teal-500/20 border border-emerald-500/20 flex items-center justify-center mb-4">
-                    <Sparkles size={24} className="text-emerald-400" />
-                  </div>
-                  <h4 className="text-sm font-medium text-zinc-200 mb-1">
-                    Hey there! 👋
-                  </h4>
-                  <p className="text-xs text-zinc-500 mb-6 leading-relaxed">
-                    I know everything about Zahid — his skills, projects,
-                    experience. Ask away!
+                <div>
+                  <p className="text-muted">
+                    I can answer questions about Zahid&apos;s projects, skills and
+                    how to reach him.
                   </p>
-                  <div className="flex flex-col gap-2 w-full">
+                  <div className="mt-4 flex flex-col items-start gap-2">
                     {SUGGESTIONS.map((s) => (
                       <button
                         key={s}
-                        onClick={() => handleSendMessage(s)}
-                        className="text-left text-xs px-4 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.06] hover:border-emerald-500/20 transition-all duration-200"
+                        type="button"
+                        onClick={() => send(s)}
+                        className="chip hover:bg-sunken transition-colors text-left"
                       >
                         {s}
                       </button>
                     ))}
                   </div>
-                </motion.div>
+                </div>
               )}
 
-              {/* Message Bubbles */}
               {messages.map((message) => (
-                <motion.div
+                <div
                   key={message.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25 }}
-                  className={`flex flex-col ${
-                    message.role === "user" ? "items-end" : "items-start"
-                  }`}
+                  className={message.role === "user" ? "flex justify-end" : "flex justify-start"}
                 >
-                  <div
-                    className={`max-w-[85%] rounded-2xl px-4 py-2.5 ${
-                      message.role === "user"
-                        ? "bg-emerald-500 text-white rounded-br-md"
-                        : "bg-white/[0.05] border border-white/[0.06] text-zinc-300 rounded-bl-md"
-                    }`}
-                  >
-                    <p className="text-[13px] leading-relaxed whitespace-pre-wrap">
+                  {message.role === "user" ? (
+                    <p className="max-w-[85%] rounded-2xl rounded-br-md bg-action text-on-action px-3.5 py-2 leading-snug whitespace-pre-wrap break-words">
                       {message.content}
                     </p>
-                  </div>
-                  <span className="text-[9px] text-zinc-600 mt-1 px-1">
-                    {formatTime(message.timestamp)}
-                  </span>
-                </motion.div>
+                  ) : (
+                    <div
+                      className={`max-w-[90%] leading-snug break-words ${
+                        message.failed
+                          ? "text-danger font-medium"
+                          : status === "streaming" && message === lastMessage
+                            ? "chat-caret"
+                            : ""
+                      }`}
+                    >
+                      <ChatMarkdown text={message.content} />
+                      {message.failed && message === lastMessage && (
+                        <button
+                          type="button"
+                          onClick={retry}
+                          disabled={isBusy}
+                          className="btn btn-quiet btn-sm mt-2 text-ink"
+                        >
+                          Ask again
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               ))}
 
-              {/* Typing Indicator */}
-              {isLoading && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="flex items-start"
-                >
-                  <div className="bg-white/[0.05] border border-white/[0.06] rounded-2xl rounded-bl-md px-4 py-3">
-                    <div className="flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/60 animate-bounce" />
-                      <span
-                        className="w-1.5 h-1.5 rounded-full bg-emerald-400/60 animate-bounce"
-                        style={{ animationDelay: "0.15s" }}
-                      />
-                      <span
-                        className="w-1.5 h-1.5 rounded-full bg-emerald-400/60 animate-bounce"
-                        style={{ animationDelay: "0.3s" }}
-                      />
-                    </div>
-                  </div>
-                </motion.div>
+              {status === "waiting" && (
+                <p className="typing py-1">
+                  <span />
+                  <span />
+                  <span />
+                  <span className="sr-only">Writing a reply</span>
+                </p>
               )}
-              <div ref={messagesEndRef} />
             </div>
 
-            {/* Input Area */}
-            <div className="px-4 py-3 border-t border-white/[0.06]">
-              <div className="flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2 focus-within:border-emerald-500/30 transition-colors">
-                <input
+            <div className="px-3 pt-3 pb-2 border-t border-line">
+              <div className="flex items-end gap-2">
+                <label htmlFor="chat-input" className="sr-only">
+                  Your question
+                </label>
+                <textarea
+                  id="chat-input"
                   ref={inputRef}
-                  type="text"
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  placeholder="Type a message..."
-                  className="flex-1 bg-transparent text-sm text-zinc-200 placeholder:text-zinc-600 outline-none"
-                  disabled={isLoading}
+                  rows={1}
+                  maxLength={MAX_LENGTH}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Ask a question"
+                  className="field resize-none max-h-28 !rounded-xl"
                 />
                 <button
-                  onClick={() => handleSendMessage()}
-                  disabled={!inputMessage.trim() || isLoading}
-                  className="w-8 h-8 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:bg-white/[0.06] disabled:text-zinc-600 text-white flex items-center justify-center transition-all duration-200 shrink-0"
+                  type="button"
+                  onClick={() => send()}
+                  disabled={!input.trim() || isBusy}
+                  aria-label="Send question"
+                  className="btn btn-primary !px-3 !rounded-xl shrink-0"
                 >
-                  <ArrowUp size={15} strokeWidth={2.5} />
+                  <ArrowUp size={16} />
                 </button>
               </div>
-              <p className="text-center text-[9px] text-zinc-700 mt-2">
-                Powered by NVIDIA NIM
+              <p className="mt-2 text-xs text-muted">
+                AI-generated answers can be wrong. Check anything important with
+                Zahid.
               </p>
             </div>
           </motion.div>

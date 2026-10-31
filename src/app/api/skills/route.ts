@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
+import { isValidObjectId } from 'mongoose';
 import connectDB from '@/lib/db';
 import Skill from '@/lib/models/skill';
 import { isAuthenticated } from '@/utils/auth';
+
+function parseLevel(level: unknown): number | null {
+  const value = Number(level);
+  if (level === undefined || level === null || level === '' || Number.isNaN(value)) return null;
+  return Math.min(100, Math.max(0, value));
+}
 
 // GET - Fetch all skills (public)
 export async function GET() {
@@ -28,14 +36,16 @@ export async function POST(request: NextRequest) {
 
     await connectDB();
     const body = await request.json();
-    const { name, level } = body;
+    const { name } = body;
+    const level = parseLevel(body.level);
 
-    if (!name || level === undefined) {
+    if (!name || level === null) {
       return NextResponse.json({ success: false, error: 'Name and level are required' }, { status: 400 });
     }
 
-    const skill = new Skill({ name, level: Math.min(100, Math.max(0, level)) });
+    const skill = new Skill({ name, level });
     await skill.save();
+    revalidatePath('/');
     return NextResponse.json({ success: true, data: skill }, { status: 201 });
   } catch (error) {
     console.error('Error creating skill:', error);
@@ -53,15 +63,24 @@ export async function PUT(request: NextRequest) {
 
     await connectDB();
     const body = await request.json();
-    const { id, name, level } = body;
+    const { id, name } = body;
+    const level = parseLevel(body.level);
 
     if (!id) {
       return NextResponse.json({ success: false, error: 'Skill ID is required' }, { status: 400 });
     }
 
+    if (!name || level === null) {
+      return NextResponse.json({ success: false, error: 'Name and level are required' }, { status: 400 });
+    }
+
+    if (!isValidObjectId(id)) {
+      return NextResponse.json({ success: false, error: 'Skill not found' }, { status: 404 });
+    }
+
     const skill = await Skill.findByIdAndUpdate(
       id,
-      { name, level: Math.min(100, Math.max(0, level)) },
+      { name, level },
       { new: true, runValidators: true }
     );
 
@@ -69,6 +88,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Skill not found' }, { status: 404 });
     }
 
+    revalidatePath('/');
     return NextResponse.json({ success: true, data: skill });
   } catch (error) {
     console.error('Error updating skill:', error);
@@ -92,11 +112,16 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Skill ID is required' }, { status: 400 });
     }
 
+    if (!isValidObjectId(id)) {
+      return NextResponse.json({ success: false, error: 'Skill not found' }, { status: 404 });
+    }
+
     const skill = await Skill.findByIdAndDelete(id);
     if (!skill) {
       return NextResponse.json({ success: false, error: 'Skill not found' }, { status: 404 });
     }
 
+    revalidatePath('/');
     return NextResponse.json({ success: true, message: 'Skill deleted successfully' });
   } catch (error) {
     console.error('Error deleting skill:', error);

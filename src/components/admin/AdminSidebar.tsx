@@ -1,160 +1,151 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import {
-  LayoutDashboard,
-  FolderOpen,
-  Wrench,
-  MessageSquare,
   Bot,
-  Settings,
+  ExternalLink,
+  FolderOpen,
+  LayoutDashboard,
   LogOut,
   Menu,
+  MessageSquare,
+  Settings,
+  Wrench,
   X,
 } from "lucide-react";
+import ThemeToggle from "@/components/common/ThemeToggle";
+import { AdminTab } from "./types";
 
 interface AdminSidebarProps {
-  user?: {
-    email: string;
-    role: string;
-  };
-  activeTab?: string;
-  onTabChange?: (tab: string) => void;
+  email: string;
+  activeTab: AdminTab;
+  onTabChange: (tab: AdminTab) => void;
+  awaitingReply: number;
 }
 
-const AdminSidebar = ({
-  user,
-  activeTab = "overview",
-  onTabChange,
-}: AdminSidebarProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const router = useRouter();
+const MENU_ITEMS: { name: string; tab: AdminTab; icon: typeof Bot }[] = [
+  { name: "Overview", tab: "overview", icon: LayoutDashboard },
+  { name: "Projects", tab: "projects", icon: FolderOpen },
+  { name: "Skills", tab: "skills", icon: Wrench },
+  { name: "Messages", tab: "messages", icon: MessageSquare },
+  { name: "Chatbot", tab: "chatbot", icon: Bot },
+  { name: "Settings", tab: "settings", icon: Settings },
+];
 
-  const menuItems = [
-    { name: "Overview", tab: "overview", icon: LayoutDashboard },
-    { name: "Projects", tab: "projects", icon: FolderOpen },
-    { name: "Skills", tab: "skills", icon: Wrench },
-    { name: "Messages", tab: "messages", icon: MessageSquare },
-    { name: "Chatbot", tab: "chatbot", icon: Bot },
-    { name: "Settings", tab: "settings", icon: Settings },
-  ];
+export default function AdminSidebar({
+  email,
+  activeTab,
+  onTabChange,
+  awaitingReply,
+}: AdminSidebarProps) {
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
-      await fetch("/api/auth", {
-        method: "DELETE",
-        credentials: "include",
-      });
-      router.push("/admin/login");
-    } catch (error) {
-      console.error("Logout error:", error);
+      await fetch("/api/auth", { method: "DELETE", credentials: "include" });
+    } finally {
+      window.location.assign("/admin/login");
     }
   };
 
-  // Get user initials for avatar
-  const getInitials = () => {
-    if (!user?.email) return "AD";
-    return user.email.substring(0, 2).toUpperCase();
-  };
-
-  const sidebarContent = (
-    <>
-      {/* Header — Avatar + Title */}
-      <div className="px-4 pt-5 pb-4">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-indigo-500/80 flex items-center justify-center shrink-0">
-            <span className="text-[10px] font-bold text-white leading-none">
-              {getInitials()}
-            </span>
-          </div>
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold text-zinc-100 leading-tight truncate">
-              Admin Panel
-            </p>
-            <p className="text-[9px] text-zinc-600 leading-tight truncate">
-              Portfolio Dashboard
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 px-2 pt-2 space-y-0.5">
-        {menuItems.map((item) => {
-          const Icon = item.icon;
-          const active = activeTab === item.tab;
-
-          return (
-            <button
-              key={item.name}
-              onClick={() => {
-                onTabChange?.(item.tab);
-                setIsOpen(false);
-              }}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] transition-all duration-150 ${
-                active
-                  ? "bg-indigo-500/15 text-indigo-400"
-                  : "text-zinc-500 hover:bg-white/[0.03] hover:text-zinc-300"
-              }`}
-            >
-              <Icon size={14} strokeWidth={active ? 2 : 1.5} />
-              <span className={active ? "font-medium" : "font-normal"}>
-                {item.name}
-              </span>
-            </button>
-          );
-        })}
-      </nav>
-
-      {/* Logout */}
-      <div className="px-2 pb-4">
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2.5 px-3 py-2 w-full rounded-lg text-[11px] text-zinc-600 hover:text-red-400 hover:bg-red-500/[0.05] transition-all duration-150"
-        >
-          <LogOut size={14} strokeWidth={1.5} />
-          <span>Logout</span>
-        </button>
-      </div>
-    </>
-  );
-
   return (
     <>
-      {/* Mobile menu button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white/[0.04] border border-white/[0.06] text-zinc-400"
-      >
-        {isOpen ? <X size={20} /> : <Menu size={20} />}
-      </button>
+      {/* Mobile top bar */}
+      <div className="lg:hidden sticky top-0 z-30 h-14 flex items-center justify-between px-2 bg-surface border-b border-line">
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          aria-label="Open menu"
+          className="icon-btn"
+        >
+          <Menu size={18} />
+        </button>
+        <span className="font-semibold">Portfolio admin</span>
+        <ThemeToggle />
+      </div>
 
-      {/* Overlay */}
       {isOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/60 z-40"
+          className="lg:hidden fixed inset-0 z-40 bg-ink/40"
           onClick={() => setIsOpen(false)}
         />
       )}
 
-      {/* Mobile sidebar (animated) */}
-      <motion.div
-        initial={{ x: -200 }}
-        animate={{ x: isOpen ? 0 : -200 }}
-        transition={{ duration: 0.3 }}
-        className="lg:hidden fixed inset-y-0 left-0 z-40 w-[180px] bg-[#0a0a0f] border-r border-white/[0.04] flex flex-col h-screen"
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 on-band w-60 flex flex-col bg-band text-on-band transition-transform duration-200 lg:translate-x-0 ${
+          isOpen ? "translate-x-0" : "max-lg:invisible -translate-x-full"
+        }`}
       >
-        {sidebarContent}
-      </motion.div>
+        <div className="flex items-center justify-between h-14 pl-5 pr-2">
+          <span className="font-semibold tracking-tight">Portfolio admin</span>
+          <button
+            type="button"
+            onClick={() => setIsOpen(false)}
+            aria-label="Close menu"
+            className="icon-btn lg:hidden"
+          >
+            <X size={16} />
+          </button>
+          <ThemeToggle className="hidden lg:inline-flex" />
+        </div>
 
-      {/* Desktop sidebar (always visible, no animation) */}
-      <div className="hidden lg:flex flex-col w-[180px] h-screen bg-[#0a0a0f] border-r border-white/[0.04]">
-        {sidebarContent}
-      </div>
+        <nav aria-label="Admin" className="flex-1 overflow-y-auto px-3 py-2 space-y-0.5">
+          {MENU_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const active = activeTab === item.tab;
+            return (
+              <button
+                key={item.tab}
+                type="button"
+                aria-current={active ? "page" : undefined}
+                onClick={() => {
+                  onTabChange(item.tab);
+                  setIsOpen(false);
+                }}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  active
+                    ? "bg-white/10 text-on-band"
+                    : "text-on-band-muted hover:bg-white/10 hover:text-on-band"
+                }`}
+              >
+                <Icon size={16} className={active ? "text-saffron" : undefined} />
+                <span className="flex-1 text-left">{item.name}</span>
+                {item.tab === "messages" && awaitingReply > 0 && (
+                  <span
+                    aria-label={`${awaitingReply} awaiting a reply`}
+                    className="min-w-5 px-1.5 rounded-full bg-saffron text-on-saffron text-xs leading-5 font-semibold text-center"
+                  >
+                    {awaitingReply}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="p-3 border-t border-band-line space-y-0.5">
+          <a
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-on-band-muted hover:bg-white/10 hover:text-on-band transition-colors"
+          >
+            <ExternalLink size={16} />
+            <span>View site</span>
+          </a>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-on-band-muted hover:bg-white/10 hover:text-on-band transition-colors"
+          >
+            <LogOut size={16} />
+            <span>Sign out</span>
+          </button>
+          <p className="px-3 pt-2 text-xs text-on-band-muted truncate" title={email}>
+            {email}
+          </p>
+        </div>
+      </aside>
     </>
   );
-};
-
-export default AdminSidebar;
+}

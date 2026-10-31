@@ -1,160 +1,54 @@
-# Zahid Farooq - Portfolio Website
+# Zahid Farooq: portfolio
 
-A modern, responsive portfolio website built with Next.js, React, TypeScript, and Tailwind CSS. This portfolio showcases projects, skills, and provides a contact form with email notifications.
-
-![Portfolio Preview](public/og-image.jpg)
+Personal portfolio with an admin panel and an AI chatbot, built with Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS 4 and MongoDB.
 
 ## Features
 
-- **Responsive Design**: Works on all devices from mobile to desktop
-- **Dark/Light Mode**: Automatic theme switching based on system preferences
-- **Admin Dashboard**: Secure admin panel to manage projects and messages
-- **Contact Form**: With database storage and email notifications
-- **Custom Cursor**: Interactive cursor with glow effect on hover
-- **Project Showcase**: Display and filter projects by category
-- **SEO Optimized**: Meta tags and Open Graph support
-- **Fast Performance**: Built with Next.js for optimal loading speeds
+- **Public site**: server-rendered with a light and dark theme. Admin edits go live immediately.
+- **Admin panel** (`/admin`): manage projects, skills, site content, chatbot notes and contact messages, and reply to messages by email.
+- **Chatbot**: streams answers from NVIDIA-hosted models, using your projects, skills, About text and notes. If the chosen model is retired, it falls back to another one.
+- **Contact form**: saves messages and sends email notifications, with a honeypot and rate limits against spam.
 
-## Tech Stack
+## Getting started
 
-- **Frontend**: React, TypeScript, Tailwind CSS
-- **Framework**: Next.js 15 (App Router)
-- **Database**: MongoDB with Mongoose
-- **Authentication**: JWT with secure HTTP-only cookies
-- **Email**: Nodemailer for contact form notifications
-- **Animation**: Framer Motion for smooth transitions
-- **Icons**: Lucide React for consistent iconography
+Requires Node.js 20.6 or later and a MongoDB database.
 
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18.17.0 or later
-- MongoDB database (local or Atlas)
-- Yarn or npm
-
-### Installation
-
-1. Clone the repository
-
-   ```bash
-   git clone https://github.com/muzad79/Portfolio.git
-   cd Portfolio
-   ```
-
-2. Install dependencies
-
-   ```bash
-   yarn install
-   # or
-   npm install
-   ```
-
-3. Set up environment variables
-   Create a `.env.local` file in the root directory with the following variables:
-
-   ```
-   MONGODB_URI=your_mongodb_connection_string
-   JWT_SECRET=your_jwt_secret_key
-   EMAIL_USER=your_email_address@gmail.com
-   EMAIL_PASSWORD=your_email_app_password
-   NOTIFICATION_EMAIL=email_to_receive_notifications@gmail.com
-   ```
-
-4. Run the development server
-
-   ```bash
-   yarn dev
-   # or
-   npm run dev
-   ```
-
-5. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-### Creating an Admin User
-
-To access the admin dashboard, you need to create an admin user:
-
-1. Run the admin creation script
-
-   ```bash
-   node scripts/create-admin.js
-   ```
-
-2. Follow the prompts or use the default credentials
-
-   - Default username: admin@example.com
-   - Default password: admin123
-
-3. Access the admin dashboard at [http://localhost:3000/admin](http://localhost:3000/admin)
-
-## Project Structure
-
-```
-├── public/              # Static assets
-├── scripts/             # Utility scripts
-├── src/
-│   ├── app/             # Next.js App Router pages
-│   │   ├── admin/       # Admin dashboard pages
-│   │   ├── api/         # API routes
-│   │   └── [...]/       # Other pages
-│   ├── components/      # React components
-│   │   ├── admin/       # Admin-specific components
-│   │   ├── common/      # Shared components
-│   │   └── [...]/       # Feature-specific components
-│   ├── lib/             # Utility functions and services
-│   │   ├── models/      # MongoDB models
-│   │   ├── db.ts        # Database connection
-│   │   ├── email.ts     # Email service
-│   │   └── [...]/       # Other utilities
-│   └── styles/          # Global styles
-├── .env.local           # Environment variables (not in repo)
-└── [...config files]    # Configuration files
+```bash
+npm install
+cp .env.example .env.local   # then fill in the values
+npm run create-admin         # creates the admin login from ADMIN_EMAIL and ADMIN_PASSWORD
+npm run dev
 ```
 
-## Email Notifications
+The site runs at http://localhost:3000, and the admin panel at http://localhost:3000/admin.
 
-The portfolio includes two types of email notifications:
+Running `npm run create-admin` again updates the password of an existing admin.
 
-1. **Admin Notifications**: When someone submits the contact form, you receive an email with their details and message.
+## Environment variables
 
-2. **Auto-Reply**: The person who submitted the form receives a confirmation email thanking them for their message.
+`.env.example` lists every variable. Keep real values in `.env.local`, which git ignores.
 
-To configure email notifications:
+## Testing
 
-1. Set up the required environment variables in `.env.local`
-2. For Gmail, you'll need to create an App Password if you have 2FA enabled
+```bash
+npx playwright install chromium   # first time only
+npm run test:e2e
+```
 
-## Customization
+The tests build the app and run it against a temporary in-memory MongoDB. They never connect to the database in your env files, never send real email, and don't call the chatbot's AI provider or Cloudinary. Use `npx playwright show-report` to see the results.
 
-### Tailwind Configuration
+## Project layout
 
-Customize the design by editing `tailwind.config.js`.
-
-### Content
-
-Update your personal information:
-
-- Edit `src/app/page.tsx` for the main landing page
-- Modify `src/components/common/Footer.tsx` for contact links
-- Update `src/components/common/Navbar.tsx` for navigation items
+```
+src/app/(site)       public page
+src/app/admin        login and dashboard
+src/app/api          API routes
+src/components/site  public page sections
+src/components/admin dashboard tabs and shared UI
+src/lib              database, email, chatbot, models
+e2e                  Playwright tests
+```
 
 ## Deployment
 
-This project can be deployed on any platform that supports Next.js applications:
-
-- **Vercel** (recommended): Connect your GitHub repository for automatic deployments
-- **Netlify**: Use the Netlify adapter for optimal performance
-- **Self-hosted**: Build the application and serve with Node.js
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgements
-
-- [Next.js](https://nextjs.org) - The React Framework
-- [Tailwind CSS](https://tailwindcss.com) - Utility-first CSS framework
-- [Framer Motion](https://www.framer.com/motion/) - Animation library
-- [MongoDB](https://www.mongodb.com) - Database
-- [Nodemailer](https://nodemailer.com) - Email sending
+Works on Vercel or any Node.js host. Set the variables from `.env.example`, including `NEXT_PUBLIC_SITE_URL`. Rate limits are kept in memory per server instance, so they are best-effort on serverless hosts.

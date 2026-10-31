@@ -1,110 +1,62 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Instrument_Sans } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/common/Navbar";
-import Footer from "@/components/common/Footer";
-import ScrollProgress from "@/components/scroll-progress";
-import AnimatedBackground from "@/components/animated-background";
-import ClientWrapper from "@/components/ClientWrapper";
+import { ThemeProvider, themeInitScript } from "@/contexts/ThemeContext";
+import { SITE_URL } from "@/lib/site";
 
-const inter = Inter({
+const instrumentSans = Instrument_Sans({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
-  variable: "--font-inter",
+  variable: "--font-instrument",
 });
 
+const title = "Zahid Farooq | Software Engineer";
+const description =
+  "Software engineer in Kashmir building web and mobile products with React, Next.js and React Native.";
+const shareImage =
+  "https://res.cloudinary.com/dtzswo7hc/image/upload/v1755886341/WhatsApp_Image_2025-08-22_at_23.42.08_mqx4bq.jpg";
+
 export const metadata: Metadata = {
-  title: "Zahid Farooq | Software Engineer",
-  description:
-    "Experienced Software Engineer specializing in React, Next.js, and modern web technologies. Building scalable web applications with clean code and exceptional user experiences.",
+  metadataBase: new URL(SITE_URL),
+  title,
+  description,
   keywords: [
     "Zahid Farooq",
     "Software Engineer",
+    "Frontend Developer",
     "React Developer",
     "Next.js Developer",
-    "JavaScript Developer",
+    "React Native Developer",
     "TypeScript Developer",
-    "Web Development",
-    "Frontend Developer",
-    "Portfolio",
-    "Software Development",
-    "Web Applications",
+    "Kashmir",
   ],
-  authors: [{ name: "Zahid Farooq", url: "https://zahidfarooq.com" }],
+  authors: [{ name: "Zahid Farooq", url: SITE_URL }],
   creator: "Zahid Farooq",
-  publisher: "Zahid Farooq",
-  robots: "index, follow",
-
-  // Favicon and icons
-  icons: {
-    icon: [
-      { url: "/favicon-3.png", type: "image/png" },
-      { url: "/favicon.ico", sizes: "32x32", type: "image/x-icon" },
-    ],
-    apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
-    ],
-    shortcut: "/favicon.ico",
-  },
-
-  // Open Graph metadata for social sharing
+  alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://zahidfarooq.com",
-    siteName: "Zahid Farooq Portfolio",
-    title: "Zahid Farooq | Software Engineer",
-    description:
-      "Experienced Software Engineer specializing in React, Next.js, and modern web technologies. Building scalable web applications with clean code and exceptional user experiences.",
-    images: [
-      {
-        url: "https://res.cloudinary.com/dtzswo7hc/image/upload/v1755886341/WhatsApp_Image_2025-08-22_at_23.42.08_mqx4bq.jpg",
-        width: 1200,
-        height: 630,
-        alt: "Zahid Farooq - Software Engineer",
-        type: "image/jpeg",
-      },
-      {
-        url: "https://res.cloudinary.com/dtzswo7hc/image/upload/v1755886341/WhatsApp_Image_2025-08-22_at_23.42.08_mqx4bq.jpg",
-        width: 400,
-        height: 400,
-        alt: "Zahid Farooq Profile Picture",
-        type: "image/jpeg",
-      },
-    ],
+    url: SITE_URL,
+    siteName: "Zahid Farooq",
+    title,
+    description,
+    images: [{ url: shareImage, alt: "Zahid Farooq" }],
   },
-
-  // Twitter Card metadata
   twitter: {
     card: "summary_large_image",
-    site: "@muzamiladnan", // Add your Twitter handle if you have one
-    creator: "@muzamiladnan",
-    title: "Zahid Farooq | Full-Stack Developer & Software Engineer",
-    description:
-      "Experienced Full-Stack Developer specializing in React, Next.js, Node.js, and modern web technologies. Building scalable web applications with clean code and exceptional user experiences.",
-    images: [
-      {
-        url: "https://res.cloudinary.com/dtzswo7hc/image/upload/v1755886341/WhatsApp_Image_2025-08-22_at_23.42.08_mqx4bq.jpg",
-        alt: "Zahid Farooq - Full-Stack Developer",
-      },
-    ],
+    title,
+    description,
+    images: [{ url: shareImage, alt: "Zahid Farooq" }],
   },
-
-  // Additional metadata
-  category: "Technology",
-  classification: "Portfolio Website",
-
-  // Verification and other meta tags
-  other: {
-    "theme-color": "#3b82f6",
-    "color-scheme": "light dark",
-    "format-detection": "telephone=no",
-  },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f7f8fa" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f151d" },
+  ],
 };
 
 export default function RootLayout({
@@ -113,17 +65,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
-      <body
-        className={`${inter.variable} font-sans antialiased min-h-screen flex flex-col bg-[#050505] text-zinc-200`}
-      >
-        <ScrollProgress />
-        <AnimatedBackground />
-        <ClientWrapper>
-          <Navbar />
-          <main className="flex-grow relative z-0">{children}</main>
-          <Footer />
-        </ClientWrapper>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
+      <body className={`${instrumentSans.variable} font-sans antialiased min-h-screen`}>
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );

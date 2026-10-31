@@ -1,143 +1,111 @@
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
-import connectDB from '@/lib/db';
-import ChatbotKnowledge from '@/lib/models/chatbotKnowledge';
-import SiteSettings from '@/lib/models/siteSettings';
+import { buildSystemPrompt, ChatMessage, getModelChain, openReply } from '@/lib/chat';
+import { clientIp, hit } from '@/lib/rateLimit';
 
-const client = new OpenAI({
-  apiKey: process.env.NVIDIA_API_KEY,
-  baseURL: 'https://integrate.api.nvidia.com/v1',
-});
+export const maxDuration = 60;
 
-// Default fallback information
-const DEFAULT_INFO = `
-You are an AI assistant representing Zahid Farooq, a Software Engineer. Here's information about him:
+const MAX_MESSAGE_LENGTH = 1000;
+const MAX_HISTORY = 8;
+const MAX_HISTORY_MESSAGE_LENGTH = 2000;
 
-PERSONAL INFO:
-- Name: Zahid Farooq
-- Role: Software Engineer
-- Location: Based in India
-- Passionate about creating modern, responsive web applications with beautiful user experiences and robust backend solutions
+const UNAVAILABLE = 'The assistant is unavailable right now. You can still reach Zahid through the contact form.';
 
-SKILLS & EXPERTISE:
-- Frontend Development: React, Next.js, TypeScript, Tailwind CSS, JavaScript, HTML5, CSS3
-- UI/UX Design: Figma, Adobe Creative Suite, Responsive Design, Modern UI trends
-- Design Trends: Glassmorphism, Neumorphism, Dark Mode, Custom Animations
-
-PROJECTS & EXPERIENCE:
-- Built a modern portfolio website with advanced features like custom cursor, dark mode, parallax scrolling
-- Developed hotel booking websites with responsive design
-- Created AI-powered chatbots and admission systems
-- Experience with admin dashboards and content management
-- Proficient in database design and API development
-
-CONTACT INFO:
-- GitHub: Available in portfolio
-- LinkedIn: Available in portfolio  
-- Email: Available through contact form on portfolio
-- Resume: Available for download on portfolio
-
-PERSONALITY & APPROACH:
-- Passionate about turning complex problems into simple, beautiful solutions
-- Focuses on modern web technologies and best practices
-- Believes in creating beautiful user experiences
-- Always learning and adapting to new technologies
-- Professional yet approachable
-
-Please answer questions about Zahid in a friendly, professional manner. If asked about specific technical details not mentioned here, you can provide general information about the technologies he uses. Always encourage visitors to check out his projects or contact him directly for more detailed discussions.
-`;
-
-async function getSystemPrompt(): Promise<string> {
-  try {
-    await connectDB();
-    const entries = await ChatbotKnowledge.find();
-    if (entries.length === 0) return DEFAULT_INFO;
-
-    const knowledgeText = entries
-      .map((e: { title: string; content: string }) => `${e.title}:\n${e.content}`)
-      .join('\n\n');
-
-    return `You are an AI assistant representing Zahid Farooq. Use the following knowledge to answer questions about him in a friendly, professional manner.\n\n${knowledgeText}\n\nIf asked about something not covered above, provide general helpful information and encourage visitors to use the contact form for detailed discussions.`;
-  } catch {
-    return DEFAULT_INFO;
-  }
+function cleanHistory(history: unknown): ChatMessage[] {
+  if (!Array.isArray(history)) return [];
+  return history
+    .filter(
+      (m): m is { role: string; content: string } =>
+        !!m && typeof m.content === 'string' && m.content.trim() !== '' && (m.role === 'user' || m.role === 'assistant')
+    )
+    .slice(-MAX_HISTORY)
+    .map((m) => ({
+      role: m.role as 'user' | 'assistant',
+      content: m.content.slice(0, MAX_HISTORY_MESSAGE_LENGTH),
+    }));
 }
 
+// POST - Answer a visitor's question, streamed as plain text
 export async function POST(request: NextRequest) {
+  let body;
   try {
-    const { message, conversationHistory } = await request.json();
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ success: false, error: 'Message is required' }, { status: 400 });
+  }
 
-    if (!message) {
-      return NextResponse.json(
-        { success: false, error: 'Message is required' },
-        { status: 400 }
-      );
-    }
+  const message = typeof body?.message === 'string' ? body.message.trim() : '';
 
-    if (!process.env.NVIDIA_API_KEY) {
-      return NextResponse.json(
-        { success: false, error: 'NVIDIA API key not configured' },
-        { status: 500 }
-      );
-    }
+  if (!message) {
+    return NextResponse.json({ success: false, error: 'Message is required' }, { status: 400 });
+  }
 
-    const systemPrompt = await getSystemPrompt();
-
-    // Get model from DB settings
-    let modelName = 'meta/llama-3.1-8b-instruct';
-    try {
-      const settings = await SiteSettings.findOne();
-      if (settings?.aiModel) modelName = settings.aiModel;
-    } catch {
-      // use default
-    }
-
-    const messages = [
-      {
-        role: 'system' as const,
-        content: systemPrompt
-      },
-      ...conversationHistory.map((msg: { role: string; content: string }) => ({
-        role: msg.role === 'user' ? 'user' as const : 'assistant' as const,
-        content: msg.content
-      })),
-      {
-        role: 'user' as const,
-        content: message
-      }
-    ];
-
-    const completion = await client.chat.completions.create({
-      model: modelName,
-      messages: messages,
-      max_tokens: 512,
-      temperature: 0.7,
-      top_p: 0.9,
-      stream: false,
-    });
-
-    const aiResponse = completion.choices[0]?.message?.content;
-
-    if (!aiResponse) {
-      throw new Error('No response from AI');
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: aiResponse
-    });
-
-  } catch (error: unknown) {
-    console.error('Chatbot API error:', error);
-    
-    const errorMessage = error instanceof Error ? error.message : 'Failed to process chatbot request';
-    
+  if (message.length > MAX_MESSAGE_LENGTH) {
     return NextResponse.json(
-      { 
-        success: false, 
-        error: errorMessage
-      },
-      { status: 500 }
+      { success: false, error: `Keep questions under ${MAX_MESSAGE_LENGTH} characters` },
+      { status: 400 }
     );
+  }
+
+  if (!hit(`chat:${clientIp(request)}`, 20, 60 * 1000)) {
+    return NextResponse.json(
+      { success: false, error: 'Too many questions at once. Try again in a minute.' },
+      { status: 429 }
+    );
+  }
+
+  if (!process.env.NVIDIA_API_KEY) {
+    console.error('NVIDIA_API_KEY is not configured');
+    return NextResponse.json({ success: false, error: UNAVAILABLE }, { status: 503 });
+  }
+
+  try {
+    const [systemPrompt, { chain }] = await Promise.all([buildSystemPrompt(), getModelChain()]);
+
+    const reply = await openReply(
+      chain,
+      [
+        { role: 'system', content: systemPrompt },
+        ...cleanHistory(body.conversationHistory),
+        { role: 'user', content: message },
+      ],
+      request.signal
+    );
+
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(encoder.encode(reply.first));
+      },
+      async pull(controller) {
+        try {
+          const { value, done } = await reply.rest.next();
+          if (done) {
+            controller.close();
+            reply.close();
+            return;
+          }
+          const text = value.choices[0]?.delta?.content;
+          if (text) controller.enqueue(encoder.encode(text));
+        } catch (error) {
+          console.error('Chat stream failed:', error);
+          controller.error(error);
+          reply.close();
+        }
+      },
+      cancel() {
+        reply.close();
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-store',
+        'X-Accel-Buffering': 'no',
+      },
+    });
+  } catch (error) {
+    console.error('Chatbot API error:', error);
+    return NextResponse.json({ success: false, error: UNAVAILABLE }, { status: 503 });
   }
 }

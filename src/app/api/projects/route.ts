@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
+import { isValidObjectId } from 'mongoose';
 import connectDB from '@/lib/db';
 import Project from '@/lib/models/project';
 import { isAuthenticated } from '@/utils/auth';
+
+function validUrl(value: unknown): boolean {
+  return !value || (typeof value === 'string' && /^https?:\/\//i.test(value.trim()));
+}
 
 // GET - Fetch all projects (public)
 export async function GET() {
@@ -35,9 +41,16 @@ export async function POST(request: NextRequest) {
     const { title, description, tech, image, repoUrl, liveUrl } = body;
 
     // Validate required fields
-    if (!title || !description || !tech || !image) {
+    if (!title || !description || !Array.isArray(tech) || !image) {
       return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
+        { success: false, error: 'Title, description and image are required' },
+        { status: 400 }
+      );
+    }
+
+    if (!validUrl(repoUrl) || !validUrl(liveUrl)) {
+      return NextResponse.json(
+        { success: false, error: 'Links must start with http:// or https://' },
         { status: 400 }
       );
     }
@@ -52,6 +65,7 @@ export async function POST(request: NextRequest) {
     });
 
     await project.save();
+    revalidatePath('/');
     return NextResponse.json({ success: true, data: project }, { status: 201 });
   } catch (error) {
     console.error('Error creating project:', error);
@@ -85,6 +99,20 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    if (!isValidObjectId(id)) {
+      return NextResponse.json(
+        { success: false, error: 'Project not found' },
+        { status: 404 }
+      );
+    }
+
+    if (!validUrl(repoUrl) || !validUrl(liveUrl)) {
+      return NextResponse.json(
+        { success: false, error: 'Links must start with http:// or https://' },
+        { status: 400 }
+      );
+    }
+
     const project = await Project.findByIdAndUpdate(
       id,
       { title, description, tech, image, repoUrl, liveUrl },
@@ -98,6 +126,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    revalidatePath('/');
     return NextResponse.json({ success: true, data: project });
   } catch (error) {
     console.error('Error updating project:', error);
@@ -131,6 +160,13 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    if (!isValidObjectId(id)) {
+      return NextResponse.json(
+        { success: false, error: 'Project not found' },
+        { status: 404 }
+      );
+    }
+
     const project = await Project.findByIdAndDelete(id);
 
     if (!project) {
@@ -140,6 +176,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    revalidatePath('/');
     return NextResponse.json({ success: true, message: 'Project deleted successfully' });
   } catch (error) {
     console.error('Error deleting project:', error);

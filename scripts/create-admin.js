@@ -1,89 +1,54 @@
-// Script to create an admin user
-require("dotenv").config({ path: ".env.local" });
+// Creates the admin user, or updates its password if the user already exists.
+// Reads everything from the environment, so no secrets live in this file:
+//   npm run create-admin
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
-// MongoDB connection - hardcoded for direct use
-const MONGODB_URI =
-  "mongodb+srv://zahid:ddtHc2263@cluster0.g2uwokq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const { MONGODB_URI, ADMIN_EMAIL, ADMIN_PASSWORD } = process.env;
 
-if (!MONGODB_URI) {
-  console.error("MongoDB URI is not defined");
+if (!MONGODB_URI || !ADMIN_EMAIL || !ADMIN_PASSWORD) {
+  console.error("Set MONGODB_URI, ADMIN_EMAIL and ADMIN_PASSWORD in .env.local");
   process.exit(1);
 }
 
-// Define User Schema (simplified version of your existing schema)
-const UserSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  password: {
-    type: String,
-    required: true,
-  },
-  role: {
-    type: String,
-    enum: ["admin"],
-    default: "admin",
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+if (ADMIN_PASSWORD.length < 12) {
+  console.error("ADMIN_PASSWORD must be at least 12 characters");
+  process.exit(1);
+}
 
-// Create User model
-const User = mongoose.models.User || mongoose.model("User", UserSchema);
-
-// Admin user details - you can change these values
-const adminUser = {
-  name: "Zahid Farooq",
-  email: "darzahid537@gmail.com",
-  password: "ddtHc22#63", // You should change this to a secure password
-  role: "admin",
-};
+// Mirrors the fields in src/lib/models/user.ts
+const User = mongoose.model(
+  "User",
+  new mongoose.Schema({
+    email: { type: String, required: true, unique: true, trim: true, lowercase: true },
+    password: { type: String, required: true },
+    role: { type: String, enum: ["admin"], default: "admin" },
+    createdAt: { type: Date, default: Date.now },
+  }),
+);
 
 async function createAdminUser() {
   try {
-    // Connect to MongoDB
     await mongoose.connect(MONGODB_URI);
-    console.log("Connected to MongoDB");
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email: adminUser.email });
-    if (existingUser) {
-      console.log(`User with email ${adminUser.email} already exists`);
-      process.exit(0);
+    const password = await bcrypt.hash(ADMIN_PASSWORD, 12);
+    const email = ADMIN_EMAIL.toLowerCase().trim();
+    const existing = await User.findOne({ email });
+
+    if (existing) {
+      existing.password = password;
+      await existing.save();
+      console.log(`Updated the password for ${email}`);
+    } else {
+      await User.create({ email, password, role: "admin" });
+      console.log(`Created admin user ${email}`);
     }
-
-    // Hash password
-    const salt = await bcrypt.genSalt(12);
-    const hashedPassword = await bcrypt.hash(adminUser.password, salt);
-
-    // Create new admin user
-    const newUser = new User({
-      name: adminUser.name,
-      email: adminUser.email,
-      password: hashedPassword,
-      role: adminUser.role,
-    });
-
-    await newUser.save();
-    console.log(`Admin user created successfully: ${adminUser.email}`);
   } catch (error) {
-    console.error("Error creating admin user:", error);
+    console.error("Could not create the admin user:", error.message);
+    process.exitCode = 1;
   } finally {
-    // Close MongoDB connection
     await mongoose.disconnect();
-    console.log("Disconnected from MongoDB");
   }
 }
 
-// Run the function
 createAdminUser();

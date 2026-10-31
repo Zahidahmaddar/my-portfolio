@@ -1,18 +1,20 @@
 import mongoose from 'mongoose';
 
-const RAW_URI = process.env.MONGODB_URI!;
-//for pushing
-// Auto-encode password to handle special characters
+// Encode credentials so passwords with special characters work, without
+// double-encoding a URI that is already encoded
 function encodeMongoURI(uri: string): string {
-  const match = uri.match(/^(mongodb(?:\+srv)?:\/\/)([^:]+):([^@]+)@(.+)$/);
+  const match = uri.match(/^(mongodb(?:\+srv)?:\/\/)([^:]+):(.+)@([^@]+)$/);
   if (!match) return uri;
   const [, scheme, user, password, rest] = match;
-  return `${scheme}${encodeURIComponent(user)}:${encodeURIComponent(password)}@${rest}`;
+  return `${scheme}${encodeOnce(user)}:${encodeOnce(password)}@${rest}`;
 }
 
-const MONGODB_URI = encodeMongoURI(RAW_URI);
-if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
+function encodeOnce(value: string): string {
+  try {
+    return encodeURIComponent(decodeURIComponent(value));
+  } catch {
+    return encodeURIComponent(value);
+  }
 }
 
 interface MongooseCache {
@@ -37,11 +39,17 @@ async function connectDB(): Promise<typeof mongoose> {
   }
 
   if (!cached!.promise) {
+    const uri = process.env.MONGODB_URI;
+    if (!uri) {
+      throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
+    }
+
     const opts = {
       bufferCommands: false,
+      serverSelectionTimeoutMS: 8000,
     };
 
-    cached!.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+    cached!.promise = mongoose.connect(encodeMongoURI(uri), opts).then((mongoose) => {
       return mongoose;
     });
   }

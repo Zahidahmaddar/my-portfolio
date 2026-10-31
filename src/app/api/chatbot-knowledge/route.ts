@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isValidObjectId } from 'mongoose';
 import connectDB from '@/lib/db';
 import ChatbotKnowledge from '@/lib/models/chatbotKnowledge';
 import { isAuthenticated } from '@/utils/auth';
 
-// GET - Fetch all knowledge entries (public for chatbot use)
-export async function GET() {
+// GET - Fetch all knowledge entries (admin only; the chatbot reads the database directly)
+export async function GET(request: NextRequest) {
   try {
+    const user = isAuthenticated(request);
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     await connectDB();
     const entries = await ChatbotKnowledge.find().sort({ createdAt: -1 });
     return NextResponse.json({ success: true, data: entries });
@@ -59,6 +65,14 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Entry ID is required' }, { status: 400 });
     }
 
+    if (!title || !content) {
+      return NextResponse.json({ success: false, error: 'Title and content are required' }, { status: 400 });
+    }
+
+    if (!isValidObjectId(id)) {
+      return NextResponse.json({ success: false, error: 'Entry not found' }, { status: 404 });
+    }
+
     const entry = await ChatbotKnowledge.findByIdAndUpdate(
       id,
       { title, content },
@@ -90,6 +104,10 @@ export async function DELETE(request: NextRequest) {
 
     if (!id) {
       return NextResponse.json({ success: false, error: 'Entry ID is required' }, { status: 400 });
+    }
+
+    if (!isValidObjectId(id)) {
+      return NextResponse.json({ success: false, error: 'Entry not found' }, { status: 404 });
     }
 
     const entry = await ChatbotKnowledge.findByIdAndDelete(id);

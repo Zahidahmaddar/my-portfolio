@@ -58,7 +58,7 @@ const SiteSettingsSchema = new Schema<ISiteSettings>({
   },
   aiModel: {
     type: String,
-    default: 'meta/llama-3.1-8b-instruct',
+    default: 'openai/gpt-oss-20b',
   },
   updatedAt: {
     type: Date,

@@ -1,28 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import connectDB from '@/lib/db';
 import SiteSettings from '@/lib/models/siteSettings';
 import { isAuthenticated } from '@/utils/auth';
 
-// GET - Fetch site settings (public)
-export async function GET() {
+const TEXT_FIELDS = [
+  'heroSubtitle',
+  'heroImage',
+  'titleLine1',
+  'titleLine2',
+  'heroDescription',
+  'aboutImage',
+  'resumeUrl',
+  'aiModel',
+] as const;
+
+// GET - Fetch site settings (the chatbot model is only shown to the admin)
+export async function GET(request: NextRequest) {
   try {
     await connectDB();
-    let settings = await SiteSettings.findOne();
-    if (!settings) {
-      // Create default settings if none exist
-      settings = await SiteSettings.create({
-        heroSubtitle: 'Full Stack Developer',
-        titleLine1: 'Zahid',
-        titleLine2: 'Farooq',
-        heroDescription: '',
-        heroImage: '',
-        aboutImage: '',
-        aboutParagraphs: [],
-        resumeUrl: '',
-        stats: [],
-      });
-    }
-    return NextResponse.json({ success: true, data: settings });
+    const settings = (await SiteSettings.findOne()) ?? new SiteSettings();
+    const data = settings.toObject();
+    if (!isAuthenticated(request)) delete data.aiModel;
+    return NextResponse.json({ success: true, data });
   } catch (error) {
     console.error('Error fetching site settings:', error);
     return NextResponse.json(
@@ -32,7 +32,7 @@ export async function GET() {
   }
 }
 
-// PUT - Update site settings (admin only)
+// PUT - Update site settings (admin only). Fields left out of the body are kept.
 export async function PUT(request: NextRequest) {
   try {
     const user = isAuthenticated(request);
@@ -43,14 +43,30 @@ export async function PUT(request: NextRequest) {
     await connectDB();
     const body = await request.json();
 
-    let settings = await SiteSettings.findOne();
-    if (!settings) {
-      settings = new SiteSettings(body);
-    } else {
-      Object.assign(settings, body, { updatedAt: new Date() });
+    const updates: Record<string, unknown> = { updatedAt: new Date() };
+    for (const field of TEXT_FIELDS) {
+      if (typeof body[field] === 'string') updates[field] = body[field].trim();
+    }
+    if (Array.isArray(body.aboutParagraphs)) {
+      updates.aboutParagraphs = body.aboutParagraphs
+        .filter((p: unknown): p is string => typeof p === 'string')
+        .map((p: string) => p.trim())
+        .filter(Boolean);
+    }
+    if (Array.isArray(body.stats)) {
+      updates.stats = body.stats
+        .map((s: { value?: unknown; label?: unknown }) => ({
+          value: String(s?.value ?? '').trim(),
+          label: String(s?.label ?? '').trim(),
+        }))
+        .filter((s: { value: string; label: string }) => s.value && s.label);
     }
 
+    const settings = (await SiteSettings.findOne()) ?? new SiteSettings();
+    settings.set(updates);
     await settings.save();
+
+    revalidatePath('/');
     return NextResponse.json({ success: true, data: settings });
   } catch (error) {
     console.error('Error updating site settings:', error);
